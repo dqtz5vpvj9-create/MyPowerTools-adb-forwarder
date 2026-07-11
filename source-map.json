@@ -3,7 +3,7 @@
   "toolId": "adb-forwarder",
   "sourceClassification": "original-product-repository",
   "sourceNote": "The complete dirty-capable AdbForwarder Git working tree is captured with build outputs, publish artifacts, certificates, archives, and user files excluded.",
-  "capturedAtUtc": "2026-07-11T16:41:51.6203905+00:00",
+  "capturedAtUtc": "2026-07-11T16:45:06.8630136+00:00",
   "originalSource": {
     "sourceRoot": "C:\\Users\\lixinrui\\source\\repos\\AdbForwarder",
     "gitTopLevel": "C:/Users/lixinrui/source/repos/AdbForwarder",
@@ -31,8 +31,8 @@
     "src/MyPowerTools.Shell.Avalonia/**/*AdbForwarding*",
     "src/MyPowerTools.Tests/Adb*"
   ],
-  "currentIntegrationMatchedFileCount": 31,
-  "currentIntegrationCopiedFileCount": 31,
+  "currentIntegrationMatchedFileCount": 29,
+  "currentIntegrationCopiedFileCount": 29,
   "currentIntegrationUnmatchedGlobs": [],
   "currentIntegrationMissingFiles": []
 }
