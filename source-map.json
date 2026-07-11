@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "toolId": "adb-forwarder",
+  "sourceClassification": "original-product-repository",
+  "sourceNote": "The complete dirty-capable AdbForwarder Git working tree is captured with build outputs, publish artifacts, certificates, archives, and user files excluded.",
+  "capturedAtUtc": "2026-07-11T16:41:51.6203905+00:00",
+  "originalSource": {
+    "sourceRoot": "C:\\Users\\lixinrui\\source\\repos\\AdbForwarder",
+    "gitTopLevel": "C:/Users/lixinrui/source/repos/AdbForwarder",
+    "commit": "ec1b28c3a7b248fa4ca317283022146d37bd2a16",
+    "branch": "master",
+    "dirty": true,
+    "status": [
+      " M AdbForwarder.csproj",
+      " M ForwarderConfiguration.cs",
+      "M  Program.cs",
+      "?? publish.zip"
+    ]
+  },
+  "originalSnapshotPath": "original-source",
+  "selectedEntries": [
+    "."
+  ],
+  "copiedFileCount": 16,
+  "missingEntries": [],
+  "currentIntegrationSnapshot": "current-integration",
+  "currentIntegrationGlobs": [
+    "modules/adb-forwarder/**",
+    "src/AdbForwarder.MyPowerTools/**",
+    "src/MyPowerTools.Shell.Avalonia/**/*AdbForwarder*",
+    "src/MyPowerTools.Shell.Avalonia/**/*AdbForwarding*",
+    "src/MyPowerTools.Tests/Adb*"
+  ],
+  "currentIntegrationMatchedFileCount": 31,
+  "currentIntegrationCopiedFileCount": 31,
+  "currentIntegrationUnmatchedGlobs": [],
+  "currentIntegrationMissingFiles": []
+}

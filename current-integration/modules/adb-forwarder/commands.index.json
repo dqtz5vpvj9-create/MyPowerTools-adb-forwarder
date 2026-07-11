@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "1.0",
+  "commands": [
+    {
+      "id": "adb-forwarder.forward.open",
+      "title": "Forward an ADB device",
+      "subtitle": "Select a USB device and open the bounded forwarding workflow",
+      "kind": "open",
+      "category": "AdbForwarder",
+      "execution": {
+        "type": "navigation",
+        "toolId": "adb-forwarder",
+        "routeId": "forward"
+      }
+    },
+    {
+      "id": "adb-forwarder.diagnostics.open",
+      "title": "Open ADB forwarding diagnostics",
+      "subtitle": "Navigate to diagnostics and port mapping state",
+      "kind": "open",
+      "category": "AdbForwarder",
+      "execution": {
+        "type": "navigation",
+        "toolId": "adb-forwarder",
+        "routeId": "diagnostics"
+      }
+    },
+    {
+      "id": "adb-forwarder.portproxy.apply",
+      "title": "Request portproxy apply",
+      "subtitle": "Requires NetworkBroker approval, rollback plan and audit",
+      "kind": "action",
+      "category": "AdbForwarder",
+      "requiresElevation": true,
+      "dangerLevel": "medium",
+      "parameters": [
+        {
+          "id": "reason",
+          "label": "Reason",
+          "type": "multiline",
+          "required": false,
+          "defaultValue": "Apply configured ADB port forwarding rules through NetworkBroker."
+        }
+      ],
+      "constraints": [
+        "mutatesSystemState",
+        "requiresElevatedWrites"
+      ],
+      "execution": {
+        "type": "broker.request",
+        "actionId": "network.portproxy.apply",
+        "scope": "adb-forwarder rules",
+        "reason": "Apply configured ADB port forwarding rules"
+      }
+    },
+    {
+      "id": "adb-forwarder.portproxy.revert",
+      "title": "Request portproxy revert",
+      "subtitle": "Requires NetworkBroker approval and rollback audit",
+      "kind": "action",
+      "category": "AdbForwarder",
+      "requiresElevation": true,
+      "dangerLevel": "medium",
+      "parameters": [
+        {
+          "id": "reason",
+          "label": "Reason",
+          "type": "multiline",
+          "required": false,
+          "defaultValue": "Revert configured ADB port forwarding rules through NetworkBroker."
+        }
+      ],
+      "constraints": [
+        "mutatesSystemState",
+        "requiresElevatedWrites"
+      ],
+      "execution": {
+        "type": "broker.request",
+        "actionId": "network.portproxy.remove",
+        "scope": "adb-forwarder rules",
+        "reason": "Revert configured ADB port forwarding rules"
+      }
+    },
+    {
+      "id": "adb-forwarder.logs.tail",
+      "title": "Show ADB forwarding logs",
+      "subtitle": "Open the latest Runner-side module logs",
+      "kind": "open",
+      "category": "AdbForwarder",
+      "execution": {
+        "type": "navigation",
+        "toolId": "adb-forwarder",
+        "routeId": "diagnostics"
+      }
+    }
+  ]
+}
