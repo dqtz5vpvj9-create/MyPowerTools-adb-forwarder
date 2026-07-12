@@ -1,32 +1,65 @@
 <!-- mypowertools-materialized-source -->
-# MyPowerTools tool source: {{TOOL_ID}}
+# adb-forwarder
 
-This local development repository was materialized from
-`artifacts/source-bundle/tools/{{TOOL_ID}}`.
-
-Committed snapshot content:
-
-- `original-source/`: captured original tool source;
-- `current-integration/`: current MyPowerTools module, product UI, service, and related test source;
-- `source-map.json`: source commit, dirty-state, and snapshot mapping;
-- `README.md`: local materialization and remote migration instructions.
-
-## Local submodule URL
-
-The initial superproject URL is local to this machine:
+This repository contains the `adb-forwarder` tool source and its current
+MyPowerTools adapter. Its local submodule origin is:
 
 ```text
-{{LOCAL_FILE_URL}}
+file:///C:/Users/lixinrui/repo/MyPowerTools.ToolRepos/adb-forwarder
 ```
 
-After this repository is published, run the following commands from the
-MyPowerTools superproject and commit the resulting `.gitmodules` update:
+## Repository layout
+
+- `original-source/` contains the captured AdbForwarder product repository.
+- `current-integration/` contains the MyPowerTools adapter, package template,
+  product UI integration source, services, and related test snapshots.
+- `source-map.json` records the captured source commit, dirty state, and file
+  mapping.
+- `tool-release.json` declares the adapter project, suite project references,
+  package template, and staged package output.
+- `build.ps1` builds the adapter in Release configuration and stages the
+  package at `artifacts/package`.
+
+The package and module IDs are both `adb-forwarder`.
+
+## Build
+
+Pass the MyPowerTools superproject explicitly when the repositories are in
+arbitrary locations:
 
 ```powershell
-git config -f .gitmodules submodule.tools/{{TOOL_ID}}.url <remote-url>
-git submodule sync -- tools/{{TOOL_ID}}
-git add .gitmodules
+pwsh ./build.ps1 -MyPowerToolsRepoRoot 'C:\path\to\MyPowerTools'
 ```
 
-The materialization script preserves a URL that has already been changed to a
-remote location and does not contact that remote.
+The parameter can be omitted for a checkout under
+`MyPowerTools/tools/adb-forwarder` or a standalone checkout beside a directory
+named `MyPowerTools`:
+
+```powershell
+pwsh ./build.ps1
+```
+
+Automatic discovery also considers the `MYPOWERTOOLS_REPO_ROOT` environment
+variable. A direct adapter build must pass the equivalent MSBuild property:
+
+```powershell
+dotnet build ./current-integration/src/AdbForwarder.MyPowerTools/AdbForwarder.MyPowerTools.csproj `
+  --configuration Release `
+  -p:MyPowerToolsRepoRoot='C:\path\to\MyPowerTools'
+```
+
+The package template remains under
+`current-integration/modules/adb-forwarder`. The build copies the completed
+template, including `AdbForwarder.MyPowerTools.dll`, to `artifacts/package`.
+Package integrity metadata requires refresh before a signed release.
+
+## Publishing the repository
+
+After publishing this repository, update its URL from the MyPowerTools
+superproject and commit `.gitmodules`:
+
+```powershell
+git config -f .gitmodules submodule.tools/adb-forwarder.url <remote-url>
+git submodule sync -- tools/adb-forwarder
+git add .gitmodules
+```
