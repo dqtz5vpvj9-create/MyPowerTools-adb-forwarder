@@ -105,6 +105,10 @@
                           AutomationProperties.Name="设备"
                           Command="{Binding ShowDevicesCommand}"
                           Classes.MptPrimaryButton="{Binding IsDevices}" />
+      <controls:MptButton Content="设备设置"
+                          AutomationProperties.Name="设备设置"
+                          Command="{Binding ShowSettingsCommand}"
+                          Classes.MptPrimaryButton="{Binding IsSettings}" />
       <controls:MptButton Content="活动"
                           AutomationProperties.Name="活动"
                           Command="{Binding ShowActivityCommand}"
@@ -568,6 +572,193 @@
           </Border>
         </StackPanel>
       </Grid>
+    </StackPanel>
+
+    <StackPanel IsVisible="{Binding IsSettings}"
+                Spacing="{DynamicResource MptSpacingL}">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <StackPanel Spacing="2">
+          <TextBlock Classes="MptSectionTitle" Text="ADB 环境与设备设置" />
+          <TextBlock Classes="MptMeta"
+                     Text="这些值直接驱动设备扫描、后台有线转发和 Wi-Fi ADB 恢复。"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+        <Border Grid.Column="1" Classes="MptStatusBadge" VerticalAlignment="Center">
+          <TextBlock Text="{Binding EnvironmentStateLabel}" Classes="MptMeta" />
+        </Border>
+      </Grid>
+
+      <Border Classes="MptCard">
+        <StackPanel Spacing="{DynamicResource MptSpacingM}">
+          <TextBlock Classes="MptSectionTitle" Text="运行环境" />
+          <Grid ColumnDefinitions="1.2*,0.8*" ColumnSpacing="{DynamicResource MptSpacingL}">
+            <StackPanel Spacing="6">
+              <TextBlock Text="ADB 可执行文件" FontWeight="SemiBold" />
+              <controls:MptTextBox Text="{Binding AdbExecutablePath, Mode=TwoWay}"
+                                   PlaceholderText="adb 或 adb.exe 的完整路径"
+                                   AutomationProperties.Name="ADB 可执行文件路径" />
+              <TextBlock Classes="MptMeta"
+                         Text="可填写 PATH 中的命令名，也可填写 Android platform-tools 中 adb.exe 的完整路径。"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="6">
+              <TextBlock Text="设备配置文件" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding ConfigurationPath}"
+                         Classes="MptMono"
+                         TextWrapping="Wrap" />
+              <TextBlock Classes="MptMeta"
+                         Text="保存时会校验全部设备，并以 UTF-8 原子更新 devices.ini。"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+          </Grid>
+          <StackPanel Spacing="6">
+            <TextBlock Text="WakeupPad 设备 ID（可选）" FontWeight="SemiBold" />
+            <controls:MptTextBox Text="{Binding WakeupPadDeviceId, Mode=TwoWay}"
+                                 PlaceholderText="用于唤醒面板的 ADB 设备 ID"
+                                 AutomationProperties.Name="WakeupPad 设备 ID" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="MptCard">
+        <StackPanel Spacing="{DynamicResource MptSpacingM}">
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="MptSectionTitle" Text="有线设备转发" />
+              <TextBlock Classes="MptMeta"
+                         Text="为每台 USB ADB 设备分配固定共享端口；内部 ADB 端口自动使用共享端口 + 15000。"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+            <controls:MptButton Grid.Column="1"
+                                Content="添加有线设备"
+                                Command="{Binding AddConfiguredForwardDeviceCommand}" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding ConfiguredForwardDeviceEditors}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:AdbForwardDeviceSettingEditorViewModel">
+                <Border Classes="MptInset" Margin="{DynamicResource MptGapBottomXs}">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,160,Auto" ColumnSpacing="10">
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="设备 ID" Classes="MptMeta" />
+                        <controls:MptTextBox Text="{Binding DeviceId, Mode=TwoWay}"
+                                             PlaceholderText="USB ADB 序列号"
+                                             AutomationProperties.Name="有线设备 ID" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Text="共享端口" Classes="MptMeta" />
+                        <controls:MptTextBox Text="{Binding Port, Mode=TwoWay}"
+                                             PlaceholderText="15555"
+                                             AutomationProperties.Name="有线设备共享端口" />
+                      </StackPanel>
+                      <controls:MptButton Grid.Column="2"
+                                          Content="移除"
+                                          Command="{Binding RemoveCommand}"
+                                          VerticalAlignment="Bottom" />
+                    </Grid>
+                    <TextBlock Text="{Binding ValidationMessage}"
+                               Foreground="{DynamicResource MptBrushDanger}"
+                               IsVisible="{Binding HasValidationError}"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Border Classes="MptEmptyState" IsVisible="{Binding !HasConfiguredForwardDeviceEditors}">
+            <TextBlock Text="还没有有线设备配置。添加设备后填写 ADB 设备 ID 与共享端口。"
+                       Classes="MptMeta"
+                       HorizontalAlignment="Center" />
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="MptCard">
+        <StackPanel Spacing="{DynamicResource MptSpacingM}">
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="MptSectionTitle" Text="无线设备转发" />
+              <TextBlock Classes="MptMeta"
+                         Text="定时探测无线 ADB；失联时通过配对的 USB 设备恢复 adb tcp。"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+            <controls:MptButton Grid.Column="1"
+                                Content="添加无线设备"
+                                Command="{Binding AddConfiguredWifiDeviceCommand}" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding ConfiguredWifiDeviceEditors}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:AdbWifiDeviceSettingEditorViewModel">
+                <Border Classes="MptInset" Margin="{DynamicResource MptGapBottomXs}">
+                  <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                      <controls:MptCheckBox IsChecked="{Binding Enabled, Mode=TwoWay}"
+                                            Content="启用"
+                                            AutomationProperties.Name="启用无线设备" />
+                      <controls:MptTextBox Grid.Column="1"
+                                           Text="{Binding Name, Mode=TwoWay}"
+                                           PlaceholderText="设备名称"
+                                           AutomationProperties.Name="无线设备名称" />
+                      <controls:MptButton Grid.Column="2"
+                                          Content="移除"
+                                          Command="{Binding RemoveCommand}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="1.2*,1.2*,140,170" ColumnSpacing="10">
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="恢复用 USB 序列号" Classes="MptMeta" />
+                        <controls:MptTextBox Text="{Binding UsbSerial, Mode=TwoWay}"
+                                             PlaceholderText="USB ADB 序列号"
+                                             AutomationProperties.Name="无线设备恢复 USB 序列号" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Text="主机或 IP" Classes="MptMeta" />
+                        <controls:MptTextBox Text="{Binding Host, Mode=TwoWay}"
+                                             PlaceholderText="10.33.0.243"
+                                             AutomationProperties.Name="无线设备主机" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="2" Spacing="4">
+                        <TextBlock Text="ADB 端口" Classes="MptMeta" />
+                        <controls:MptTextBox Text="{Binding Port, Mode=TwoWay}"
+                                             PlaceholderText="5555"
+                                             AutomationProperties.Name="无线设备端口" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="3" Spacing="4">
+                        <TextBlock Text="检查间隔（秒）" Classes="MptMeta" />
+                        <controls:MptTextBox Text="{Binding IntervalSeconds, Mode=TwoWay}"
+                                             PlaceholderText="60"
+                                             AutomationProperties.Name="无线设备检查间隔" />
+                      </StackPanel>
+                    </Grid>
+                    <TextBlock Text="{Binding ValidationMessage}"
+                               Foreground="{DynamicResource MptBrushDanger}"
+                               IsVisible="{Binding HasValidationError}"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Border Classes="MptEmptyState" IsVisible="{Binding !HasConfiguredWifiDeviceEditors}">
+            <TextBlock Text="还没有无线设备配置。添加设备后填写无线端点与恢复用 USB 序列号。"
+                       Classes="MptMeta"
+                       HorizontalAlignment="Center" />
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="MptInset">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding EnvironmentStateLabel}" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding EnvironmentMessage}" Classes="MptMeta" TextWrapping="Wrap" />
+          </StackPanel>
+          <controls:MptButton Grid.Column="1"
+                              Classes="MptPrimaryButton"
+                              Content="保存设备设置"
+                              Command="{Binding SaveEnvironmentCommand}"
+                              VerticalAlignment="Center" />
+        </Grid>
+      </Border>
     </StackPanel>
 
     <StackPanel IsVisible="{Binding IsRules}"

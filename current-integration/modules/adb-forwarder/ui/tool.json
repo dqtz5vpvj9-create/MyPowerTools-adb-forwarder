@@ -11,6 +11,7 @@
     { "routeId": "forward", "surfaceId": "adb-forwarder.forward", "title": "Forward device", "icon": "route.forward" },
     { "routeId": "rules", "surfaceId": "adb-forwarder.rules", "title": "Rules", "icon": "route.rules" },
     { "routeId": "devices", "surfaceId": "adb-forwarder.devices", "title": "Devices", "icon": "route.devices" },
+    { "routeId": "settings", "surfaceId": "adb-forwarder.settings", "title": "Device settings", "icon": "route.settings" },
     { "routeId": "activity", "surfaceId": "adb-forwarder.activity", "title": "Activity", "icon": "route.activity" },
     { "routeId": "diagnostics", "surfaceId": "adb-forwarder.diagnostics", "title": "Troubleshooting", "icon": "route.diagnostics" }
   ],

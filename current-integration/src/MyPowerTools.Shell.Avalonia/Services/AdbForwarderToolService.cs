@@ -118,6 +118,40 @@ public sealed class AdbForwarderToolService
         return updated.Revision;
     }
 
+    public async Task<ulong> SaveEnvironmentAsync(
+        ulong expectedRevision,
+        AdbForwarderEnvironmentSettings configuration,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        var adbPath = configuration.AdbPath.Trim();
+        if (adbPath.Length == 0)
+        {
+            throw new ArgumentException("ADB 可执行文件路径不能为空。", nameof(configuration));
+        }
+
+        await _configuration.SaveAsync(configuration.Devices, cancellationToken).ConfigureAwait(false);
+
+        using var client = HostControlClient.ForDefaultEndpoint();
+        var patch = new JsonObject
+        {
+            ["adbPath"] = adbPath
+        };
+        var updated = await client.UpdateSettingsAsync(
+            ModuleId,
+            expectedRevision,
+            JsonStructMapper.ToStruct(patch),
+            cancellationToken).ConfigureAwait(false);
+
+        if (_managesWorkflow && !string.Equals(adbPath, _workflowAdbPath, StringComparison.Ordinal))
+        {
+            _workflowAdbPath = adbPath;
+            _forwarding = new AdbForwardingWorkflowService(adbPath: adbPath);
+        }
+
+        return updated.Revision;
+    }
+
     public static JsonObject BuildMappingArgs(IReadOnlyList<AdbForwarderMapping> mappings)
     {
         return new JsonObject
@@ -343,6 +377,10 @@ public sealed record AdbForwarderSnapshot(
     public bool BrokerAvailable { get; init; } = true;
     public string BrokerAvailabilityMessage { get; init; } = "管理员 Broker 已就绪。";
 }
+
+public sealed record AdbForwarderEnvironmentSettings(
+    string AdbPath,
+    AdbForwarderDeviceConfiguration Devices);
 
 public sealed record AdbForwarderDevice(
     string Id,

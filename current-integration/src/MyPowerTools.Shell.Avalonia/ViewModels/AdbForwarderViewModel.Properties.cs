@@ -13,6 +13,7 @@ public sealed partial class AdbForwarderViewModel
     public bool IsDevices => SelectedRouteId == "devices";
     public bool IsActivity => SelectedRouteId == "activity";
     public bool IsDiagnostics => SelectedRouteId == "diagnostics";
+    public bool IsSettings => SelectedRouteId == "settings";
     public bool HasMappings => Mappings.Count > 0;
     public bool HasCurrentRules => CurrentRules.Count > 0;
     public bool HasDevices => Devices.Count > 0;
@@ -273,6 +274,7 @@ public sealed partial class AdbForwarderViewModel
                 OnPropertyChanged(nameof(IsDevices));
                 OnPropertyChanged(nameof(IsActivity));
                 OnPropertyChanged(nameof(IsDiagnostics));
+                OnPropertyChanged(nameof(IsSettings));
             }
         }
     }
@@ -305,10 +307,12 @@ public sealed partial class AdbForwarderViewModel
                 ((AsyncRelayCommand)PreviewChangesCommand).NotifyCanExecuteChanged();
                 ((AsyncRelayCommand)ApplyCommand).NotifyCanExecuteChanged();
                 ((AsyncRelayCommand)RevertCommand).NotifyCanExecuteChanged();
+                ((AsyncRelayCommand)SaveEnvironmentCommand).NotifyCanExecuteChanged();
                 OnPropertyChanged(nameof(CanPreview));
                 OnPropertyChanged(nameof(CanSaveMappings));
                 OnPropertyChanged(nameof(CanApply));
                 OnPropertyChanged(nameof(CanRevert));
+                OnPropertyChanged(nameof(CanSaveEnvironment));
             }
         }
     }

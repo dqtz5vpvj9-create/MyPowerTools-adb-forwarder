@@ -1,23 +1,31 @@
 using System.Globalization;
 using System.Net.Sockets;
+using System.Text;
 
 namespace MyPowerTools.Shell.Avalonia.Services;
 
 public sealed class AdbForwarderConfigurationService
 {
+    private readonly string _configPath;
     private readonly Dictionary<string, DateTimeOffset> _lastSeenOnline =
         new(StringComparer.OrdinalIgnoreCase);
+
+    public AdbForwarderConfigurationService(string? configPath = null)
+    {
+        _configPath = configPath ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AdbForwarder",
+            "devices.ini");
+    }
+
+    public string ConfigPath => _configPath;
 
     public async Task<AdbForwarderConfiguredState> LoadAsync(
         IReadOnlyList<AdbForwarderDevice> adbDevices,
         IReadOnlyList<AdbForwarderRule> portProxyRules,
         CancellationToken cancellationToken)
     {
-        var configPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AdbForwarder",
-            "devices.ini");
-        var parsed = Parse(configPath);
+        var parsed = Parse(_configPath);
         var now = DateTimeOffset.Now;
 
         var forwardDevices = parsed.ForwardDevices.Select(entry =>
@@ -72,12 +80,158 @@ public sealed class AdbForwarderConfigurationService
         var wifiDevices = await Task.WhenAll(wifiTasks).ConfigureAwait(false);
 
         return new AdbForwarderConfiguredState(
-            configPath,
+            _configPath,
             parsed.WakeupPadDeviceId,
             forwardDevices,
             wifiDevices,
             parsed.Error);
     }
+
+    public async Task SaveAsync(
+        AdbForwarderDeviceConfiguration configuration,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        Validate(configuration);
+
+        var directory = Path.GetDirectoryName(_configPath)
+            ?? throw new InvalidOperationException("ADB 设备配置路径缺少父目录。");
+        Directory.CreateDirectory(directory);
+        var temporaryPath = Path.Combine(
+            directory,
+            $".{Path.GetFileName(_configPath)}.{Guid.NewGuid():N}.tmp");
+
+        try
+        {
+            await File.WriteAllTextAsync(
+                temporaryPath,
+                Serialize(configuration),
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                cancellationToken).ConfigureAwait(false);
+            File.Move(temporaryPath, _configPath, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+            {
+                File.Delete(temporaryPath);
+            }
+        }
+    }
+
+    public static void Validate(AdbForwarderDeviceConfiguration configuration)
+    {
+        var errors = new List<string>();
+        var duplicateForwardDevices = configuration.ForwardDevices
+            .Where(device => !string.IsNullOrWhiteSpace(device.DeviceId))
+            .GroupBy(device => device.DeviceId.Trim(), StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1);
+        var duplicateForwardPorts = configuration.ForwardDevices
+            .Where(device => device.Port is >= 1 and <= 65535)
+            .GroupBy(device => device.Port)
+            .FirstOrDefault(group => group.Count() > 1);
+        var duplicateWifiNames = configuration.WifiDevices
+            .Where(device => !string.IsNullOrWhiteSpace(device.Name))
+            .GroupBy(device => device.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1);
+
+        for (var index = 0; index < configuration.ForwardDevices.Count; index++)
+        {
+            var device = configuration.ForwardDevices[index];
+            if (!IsSafeIniToken(device.DeviceId, allowEquals: false))
+            {
+                errors.Add($"有线设备 {index + 1} 的设备 ID 无效。");
+            }
+            if (device.Port is < 1 or > 65535)
+            {
+                errors.Add($"有线设备 {index + 1} 的共享端口需要在 1 到 65535 之间。");
+            }
+        }
+
+        for (var index = 0; index < configuration.WifiDevices.Count; index++)
+        {
+            var device = configuration.WifiDevices[index];
+            if (!IsSafeIniSectionName(device.Name))
+            {
+                errors.Add($"无线设备 {index + 1} 的名称无效。");
+            }
+            if (!IsSafeIniToken(device.UsbSerial, allowEquals: true))
+            {
+                errors.Add($"无线设备 {index + 1} 缺少恢复用 USB 序列号。");
+            }
+            if (!IsSafeIniToken(device.Host, allowEquals: true))
+            {
+                errors.Add($"无线设备 {index + 1} 缺少主机地址。");
+            }
+            if (device.Port is < 1 or > 65535)
+            {
+                errors.Add($"无线设备 {index + 1} 的端口需要在 1 到 65535 之间。");
+            }
+            if (device.IntervalSeconds is < 5 or > 86400)
+            {
+                errors.Add($"无线设备 {index + 1} 的检查间隔需要在 5 到 86400 秒之间。");
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(configuration.WakeupPadDeviceId) &&
+            !IsSafeIniToken(configuration.WakeupPadDeviceId, allowEquals: true))
+        {
+            errors.Add("WakeupPad 设备 ID 包含无效字符。");
+        }
+        if (duplicateForwardDevices is not null)
+        {
+            errors.Add($"有线设备 ID 重复：{duplicateForwardDevices.Key}。");
+        }
+        if (duplicateForwardPorts is not null)
+        {
+            errors.Add($"有线共享端口重复：{duplicateForwardPorts.Key}。");
+        }
+        if (duplicateWifiNames is not null)
+        {
+            errors.Add($"无线设备名称重复：{duplicateWifiNames.Key}。");
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new ArgumentException(string.Join(" ", errors), nameof(configuration));
+        }
+    }
+
+    private static string Serialize(AdbForwarderDeviceConfiguration configuration)
+    {
+        var lines = new List<string>
+        {
+            "; Managed by MyPowerTools ADB Forwarder",
+            "[ForwardDevices]"
+        };
+        lines.AddRange(configuration.ForwardDevices.Select(device =>
+            $"{device.DeviceId.Trim()}={device.Port.ToString(CultureInfo.InvariantCulture)}"));
+        lines.Add("");
+        lines.Add("[WakeupPad]");
+        lines.Add($"deviceId={configuration.WakeupPadDeviceId.Trim()}");
+
+        foreach (var device in configuration.WifiDevices)
+        {
+            lines.Add("");
+            lines.Add($"[WifiAdb:{device.Name.Trim()}]");
+            lines.Add($"enabled={device.Enabled.ToString().ToLowerInvariant()}");
+            lines.Add($"usbSerial={device.UsbSerial.Trim()}");
+            lines.Add($"host={device.Host.Trim()}");
+            lines.Add($"port={device.Port.ToString(CultureInfo.InvariantCulture)}");
+            lines.Add($"intervalSeconds={device.IntervalSeconds.ToString(CultureInfo.InvariantCulture)}");
+        }
+
+        return string.Join(Environment.NewLine, lines) + Environment.NewLine;
+    }
+
+    private static bool IsSafeIniSectionName(string value) =>
+        IsSafeIniToken(value, allowEquals: true) && !value.Contains(']') && !value.Contains(':');
+
+    private static bool IsSafeIniToken(string value, bool allowEquals) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        !value.Contains('\r') &&
+        !value.Contains('\n') &&
+        (allowEquals || !value.Contains('='));
 
     private static ParsedConfiguration Parse(string configPath)
     {
@@ -286,3 +440,18 @@ public sealed record AdbForwarderConfiguredState(
 {
     public static AdbForwarderConfiguredState Empty { get; } = new("", "", [], [], "");
 }
+
+public sealed record AdbForwarderForwardDeviceSetting(string DeviceId, int Port);
+
+public sealed record AdbForwarderWifiDeviceSetting(
+    string Name,
+    bool Enabled,
+    string UsbSerial,
+    string Host,
+    int Port,
+    int IntervalSeconds);
+
+public sealed record AdbForwarderDeviceConfiguration(
+    IReadOnlyList<AdbForwarderForwardDeviceSetting> ForwardDevices,
+    string WakeupPadDeviceId,
+    IReadOnlyList<AdbForwarderWifiDeviceSetting> WifiDevices);

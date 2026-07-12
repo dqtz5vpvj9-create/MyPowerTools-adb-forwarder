@@ -48,7 +48,8 @@ public sealed partial class AdbForwarderViewModel : ToolProductPageViewModel, ID
         Func<IReadOnlyList<AdbForwarderMapping>, Task<AdbForwarderPlan>>? preview = null,
         Func<string, IReadOnlyList<AdbForwarderMapping>, Task>? executeBrokered = null,
         AdbForwardingWorkflowService? forwarding = null,
-        Func<AdbForwarderBrokerAction, AdbForwarderMapping, CancellationToken, Task<AdbForwarderBrokerRequestResult>>? forwardBroker = null)
+        Func<AdbForwarderBrokerAction, AdbForwarderMapping, CancellationToken, Task<AdbForwarderBrokerRequestResult>>? forwardBroker = null,
+        Func<AdbForwarderEnvironmentSettings, Task>? saveEnvironment = null)
         : base(
             "ADB Forwarder",
             "将一台 USB ADB 设备安全转发到本机、Windows 共享端口与可选的远端 AOSP 主机",
@@ -64,6 +65,14 @@ public sealed partial class AdbForwarderViewModel : ToolProductPageViewModel, ID
         _executeBrokered = executeBrokered;
         _forwarding = forwarding ?? new AdbForwardingWorkflowService();
         _forwardBroker = forwardBroker;
+        _saveEnvironment = saveEnvironment;
+        _adbExecutablePath = snapshot.AdbPath;
+        _wakeupPadDeviceId = snapshot.ConfiguredState.WakeupPadDeviceId;
+        if (snapshot.ConfiguredState.Error.Length > 0)
+        {
+            _isEnvironmentDirty = true;
+            _environmentMessage = $"当前设备配置需要处理：{snapshot.ConfiguredState.Error}";
+        }
         var persisted = snapshot.PersistedWorkflow;
         if (persisted is not null)
         {
@@ -89,6 +98,18 @@ public sealed partial class AdbForwarderViewModel : ToolProductPageViewModel, ID
               ?? DevicesForMode(_connectionMode).FirstOrDefault();
         Mappings = new ObservableCollection<AdbForwarderMappingEditorViewModel>(
             snapshot.ConfiguredMappings.Select(CreateEditor));
+        ConfiguredForwardDeviceEditors = new ObservableCollection<AdbForwardDeviceSettingEditorViewModel>(
+            snapshot.ConfiguredState.ForwardDevices.Select(device => CreateForwardDeviceEditor(
+                new AdbForwarderForwardDeviceSetting(device.DeviceId, device.Port))));
+        ConfiguredWifiDeviceEditors = new ObservableCollection<AdbWifiDeviceSettingEditorViewModel>(
+            snapshot.ConfiguredState.WifiDevices.Select(device => CreateWifiDeviceEditor(
+                new AdbForwarderWifiDeviceSetting(
+                    device.Name,
+                    device.Enabled,
+                    device.UsbSerial,
+                    device.Host,
+                    device.Port,
+                    device.IntervalSeconds))));
         PreflightChecks = [];
         ForwardSteps = new ObservableCollection<AdbForwarderWorkflowStepViewModel>(
             _forwarding.CreatePendingSteps(_connectionMode).Select(step => new AdbForwarderWorkflowStepViewModel(step)));
@@ -101,6 +122,7 @@ public sealed partial class AdbForwarderViewModel : ToolProductPageViewModel, ID
         ShowDevicesCommand = RouteCommand("devices");
         ShowActivityCommand = RouteCommand("activity");
         ShowDiagnosticsCommand = RouteCommand("diagnostics");
+        ShowSettingsCommand = RouteCommand("settings");
         SelectWiredForwardCommand = new AsyncRelayCommand(() => SelectConnectionModeAsync(AdbForwardConnectionMode.Wired));
         SelectWirelessForwardCommand = new AsyncRelayCommand(() => SelectConnectionModeAsync(AdbForwardConnectionMode.Wireless));
         AddMappingCommand = new AsyncRelayCommand(AddMappingAsync);
@@ -118,6 +140,9 @@ public sealed partial class AdbForwarderViewModel : ToolProductPageViewModel, ID
         RetryForwardCommand = new AsyncRelayCommand(() => RunForwardAsync(retry: true), () => CanRetryForward);
         CancelForwardCommand = new AsyncRelayCommand(CancelForwardAsync, () => IsForwardBusy);
         CleanupForwardCommand = new AsyncRelayCommand(CleanupForwardAsync, () => CanCleanupForward);
+        AddConfiguredForwardDeviceCommand = new AsyncRelayCommand(AddConfiguredForwardDeviceAsync);
+        AddConfiguredWifiDeviceCommand = new AsyncRelayCommand(AddConfiguredWifiDeviceAsync);
+        SaveEnvironmentCommand = new AsyncRelayCommand(SaveEnvironmentAsync, () => CanSaveEnvironment);
     }
 
     public AdbForwarderSnapshot Snapshot { get; }
@@ -125,6 +150,8 @@ public sealed partial class AdbForwarderViewModel : ToolProductPageViewModel, ID
     public ObservableCollection<AdbForwarderPreflightCheckViewModel> PreflightChecks { get; }
     public ObservableCollection<AdbForwarderWorkflowStepViewModel> ForwardSteps { get; }
     public ObservableCollection<AdbForwarderWorkflowLogViewModel> ForwardLogs { get; }
+    public ObservableCollection<AdbForwardDeviceSettingEditorViewModel> ConfiguredForwardDeviceEditors { get; }
+    public ObservableCollection<AdbWifiDeviceSettingEditorViewModel> ConfiguredWifiDeviceEditors { get; }
     public IReadOnlyList<AdbForwarderRule> CurrentRules => Snapshot.CurrentRules;
     public IReadOnlyList<AdbForwarderDevice> Devices => Snapshot.Devices;
     public IReadOnlyList<AdbForwarderActivity> Activity => Snapshot.Activity;
@@ -137,6 +164,7 @@ public sealed partial class AdbForwarderViewModel : ToolProductPageViewModel, ID
     public ICommand ShowDevicesCommand { get; }
     public ICommand ShowActivityCommand { get; }
     public ICommand ShowDiagnosticsCommand { get; }
+    public ICommand ShowSettingsCommand { get; }
     public ICommand SelectWiredForwardCommand { get; }
     public ICommand SelectWirelessForwardCommand { get; }
     public ICommand AddMappingCommand { get; }
@@ -150,4 +178,7 @@ public sealed partial class AdbForwarderViewModel : ToolProductPageViewModel, ID
     public ICommand RetryForwardCommand { get; }
     public ICommand CancelForwardCommand { get; }
     public ICommand CleanupForwardCommand { get; }
+    public ICommand AddConfiguredForwardDeviceCommand { get; }
+    public ICommand AddConfiguredWifiDeviceCommand { get; }
+    public ICommand SaveEnvironmentCommand { get; }
 }
