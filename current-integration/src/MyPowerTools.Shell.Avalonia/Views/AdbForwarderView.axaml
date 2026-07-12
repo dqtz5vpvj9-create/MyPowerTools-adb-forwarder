@@ -244,7 +244,7 @@
           <Grid ColumnDefinitions="Auto,*"
                 ColumnSpacing="12">
             <TextBlock Text="&#xE88E;"
-                       FontFamily="Segoe Fluent Icons"
+                       FontFamily="{DynamicResource MptFontFamilyIcons}"
                        FontSize="24"
                        Foreground="{DynamicResource MptBrushAccent}"
                        VerticalAlignment="Center" />
@@ -269,7 +269,7 @@
           <Grid ColumnDefinitions="Auto,*"
                 ColumnSpacing="12">
             <TextBlock Text="&#xE701;"
-                       FontFamily="Segoe Fluent Icons"
+                       FontFamily="{DynamicResource MptFontFamilyIcons}"
                        FontSize="24"
                        Foreground="{DynamicResource MptBrushAccent}"
                        VerticalAlignment="Center" />
@@ -515,7 +515,7 @@
                               BorderBrush="{DynamicResource MptBrushDivider}"
                               BorderThickness="1">
                         <TextBlock Text="&#xE73E;"
-                                   FontFamily="Segoe Fluent Icons"
+                                   FontFamily="{DynamicResource MptFontFamilyIcons}"
                                    FontSize="{DynamicResource MptFontSizeCaption}"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center" />
@@ -844,7 +844,7 @@
                 <DataTemplate x:DataType="x:String">
                   <Grid ColumnDefinitions="18,*" Margin="{DynamicResource MptGapBottomXs}">
                     <TextBlock Text="&#xE7BA;"
-                               FontFamily="Segoe Fluent Icons"
+                               FontFamily="{DynamicResource MptFontFamilyIcons}"
                                Foreground="{DynamicResource MptBrushWarning}" />
                     <TextBlock Grid.Column="1"
                                Text="{Binding}"
@@ -990,7 +990,7 @@
                 <Border Width="38" Height="38" CornerRadius="8"
                         Background="{DynamicResource MptBrushSurfaceMuted}">
                   <TextBlock Text="&#xE8EA;"
-                             FontFamily="Segoe Fluent Icons"
+                             FontFamily="{DynamicResource MptFontFamilyIcons}"
                              FontSize="{DynamicResource MptFontSizeCardTitle}"
                              HorizontalAlignment="Center"
                              VerticalAlignment="Center" />
