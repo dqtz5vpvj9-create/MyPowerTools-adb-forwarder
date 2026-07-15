@@ -7,22 +7,10 @@
     <ModulePackageRoot>$(MSBuildProjectDirectory)\..\..\modules\adb-forwarder</ModulePackageRoot>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(MyPowerToolsRepoRoot)' != ''">
-    <ProjectReference Include="$(MyPowerToolsRepoRoot)\src\MyPowerTools.Abstractions\MyPowerTools.Abstractions.csproj" />
-    <ProjectReference Include="$(MyPowerToolsRepoRoot)\src\MyPowerTools.Protocol\MyPowerTools.Protocol.csproj" />
+  <ItemGroup>
+    <PackageReference Include="MyPowerTools.ToolSdk" Version="0.2.0" />
+    <PackageReference Include="MyPowerTools.Protocol" Version="0.2.0" />
   </ItemGroup>
-
-  <Target Name="ValidateMyPowerToolsRepoRoot" BeforeTargets="Restore;PrepareForBuild">
-    <Error
-      Condition="'$(MyPowerToolsRepoRoot)' == ''"
-      Text="MyPowerToolsRepoRoot is required. Pass -p:MyPowerToolsRepoRoot=&lt;absolute path to the MyPowerTools repository&gt;." />
-    <Error
-      Condition="'$(MyPowerToolsRepoRoot)' != '' and !Exists('$(MyPowerToolsRepoRoot)\src\MyPowerTools.Abstractions\MyPowerTools.Abstractions.csproj')"
-      Text="MyPowerToolsRepoRoot '$(MyPowerToolsRepoRoot)' is invalid: src\MyPowerTools.Abstractions\MyPowerTools.Abstractions.csproj was not found." />
-    <Error
-      Condition="'$(MyPowerToolsRepoRoot)' != '' and !Exists('$(MyPowerToolsRepoRoot)\src\MyPowerTools.Protocol\MyPowerTools.Protocol.csproj')"
-      Text="MyPowerToolsRepoRoot '$(MyPowerToolsRepoRoot)' is invalid: src\MyPowerTools.Protocol\MyPowerTools.Protocol.csproj was not found." />
-  </Target>
 
   <Target Name="CopyModuleAssemblyToPackage" AfterTargets="Build">
     <MakeDir Directories="$(ModulePackageRoot)" />

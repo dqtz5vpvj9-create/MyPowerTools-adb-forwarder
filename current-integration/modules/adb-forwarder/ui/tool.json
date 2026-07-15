@@ -6,14 +6,15 @@
   "description": "Forward a selected USB ADB device to local, shared Windows, and optional remote AOSP endpoints.",
   "icon": "tool.adb-forwarder",
   "category": "Device & Network",
+  "type": "dotnet-surface",
   "primaryRouteId": "forward",
   "routes": [
-    { "routeId": "forward", "surfaceId": "adb-forwarder.forward", "title": "Forward device", "icon": "route.forward" },
-    { "routeId": "rules", "surfaceId": "adb-forwarder.rules", "title": "Rules", "icon": "route.rules" },
-    { "routeId": "devices", "surfaceId": "adb-forwarder.devices", "title": "Devices", "icon": "route.devices" },
-    { "routeId": "settings", "surfaceId": "adb-forwarder.settings", "title": "Device settings", "icon": "route.settings" },
-    { "routeId": "activity", "surfaceId": "adb-forwarder.activity", "title": "Activity", "icon": "route.activity" },
-    { "routeId": "diagnostics", "surfaceId": "adb-forwarder.diagnostics", "title": "Troubleshooting", "icon": "route.diagnostics" }
+    { "routeId": "forward", "surfaceId": "adb-forwarder.forward", "title": "Forward device", "icon": "route.forward", "surface": { "kind": "dotnet", "assembly": "surface/AdbForwarder.Surface.dll", "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory" } },
+    { "routeId": "rules", "surfaceId": "adb-forwarder.rules", "title": "Rules", "icon": "route.rules", "surface": { "kind": "dotnet", "assembly": "surface/AdbForwarder.Surface.dll", "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory" } },
+    { "routeId": "devices", "surfaceId": "adb-forwarder.devices", "title": "Devices", "icon": "route.devices", "surface": { "kind": "dotnet", "assembly": "surface/AdbForwarder.Surface.dll", "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory" } },
+    { "routeId": "settings", "surfaceId": "adb-forwarder.settings", "title": "Device settings", "icon": "route.settings", "surface": { "kind": "dotnet", "assembly": "surface/AdbForwarder.Surface.dll", "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory" } },
+    { "routeId": "activity", "surfaceId": "adb-forwarder.activity", "title": "Activity", "icon": "route.activity", "surface": { "kind": "dotnet", "assembly": "surface/AdbForwarder.Surface.dll", "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory" } },
+    { "routeId": "diagnostics", "surfaceId": "adb-forwarder.diagnostics", "title": "Troubleshooting", "icon": "route.diagnostics", "surface": { "kind": "dotnet", "assembly": "surface/AdbForwarder.Surface.dll", "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory" } }
   ],
   "homeCard": {
     "summary": "Select a USB ADB device, run a read-only preflight, and establish bounded local or remote forwarding.",
