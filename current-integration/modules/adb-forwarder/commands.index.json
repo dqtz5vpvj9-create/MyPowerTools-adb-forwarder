@@ -50,7 +50,12 @@
         "type": "broker.request",
         "actionId": "network.portproxy.apply",
         "scope": "adb-forwarder rules",
-        "reason": "Apply configured ADB port forwarding rules"
+        "reason": "Apply configured ADB port forwarding rules",
+        "activation": {
+          "type": "navigation",
+          "toolId": "adb-forwarder",
+          "routeId": "rules"
+        }
       }
     },
     {
@@ -78,7 +83,12 @@
         "type": "broker.request",
         "actionId": "network.portproxy.remove",
         "scope": "adb-forwarder rules",
-        "reason": "Revert configured ADB port forwarding rules"
+        "reason": "Revert configured ADB port forwarding rules",
+        "activation": {
+          "type": "navigation",
+          "toolId": "adb-forwarder",
+          "routeId": "rules"
+        }
       }
     },
     {
