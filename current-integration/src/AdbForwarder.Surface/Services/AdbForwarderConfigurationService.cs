@@ -391,7 +391,9 @@ public sealed record AdbConfiguredForwardDevice(
     int InternalPort,
     AdbConfiguredDeviceState State,
     DateTimeOffset LastSeenOnline,
-    bool PortProxyReady)
+    bool PortProxyReady,
+    bool AdbForwardReady = false,
+    string LastAction = "")
 {
     public string StatusLabel => State switch
     {
@@ -402,6 +404,16 @@ public sealed record AdbConfiguredForwardDevice(
     public string LastSeenText => LastSeenOnline == default ? "—" : LastSeenOnline.ToString("yyyy-MM-dd HH:mm:ss");
     public string PublicEndpoint => $"0.0.0.0:{Port}";
     public string InternalEndpoint => $"127.0.0.1:{InternalPort}";
+    public string SharedPortLabel => $"共享端口 {Port}";
+    public string ForwardingLabel => State != AdbConfiguredDeviceState.Online
+        ? "等待设备"
+        : AdbForwardReady && PortProxyReady
+            ? "转发已就绪"
+            : AdbForwardReady
+                ? "等待启用共享端口"
+                : "正在建立转发";
+    public bool IsReady => State == AdbConfiguredDeviceState.Online && AdbForwardReady && PortProxyReady;
+    public bool NeedsAttention => State == AdbConfiguredDeviceState.Online && !IsReady;
     public bool IsOnline => State == AdbConfiguredDeviceState.Online;
     public bool IsOffline => State == AdbConfiguredDeviceState.Offline;
     public bool IsDisconnected => State == AdbConfiguredDeviceState.Disconnected;
@@ -415,11 +427,20 @@ public sealed record AdbConfiguredWifiDevice(
     int Port,
     int IntervalSeconds,
     bool Reachable,
-    bool UsbRecoveryReady)
+    bool UsbRecoveryReady,
+    string RuntimeStatus = "",
+    string RuntimeLastAction = "")
 {
     public string Endpoint => $"{Host}:{Port}";
-    public string StatusLabel => !Enabled ? "已停用" : Reachable ? "可连接" : UsbRecoveryReady ? "需要恢复" : "恢复设备未连接";
-    public string LastAction => !Enabled
+    public string StatusLabel => RuntimeStatus.ToLowerInvariant() switch
+    {
+        "reachable" => "在线",
+        "recovering" => "正在恢复",
+        "waiting-usb" => "等待 USB",
+        "disabled" => "已停用",
+        _ => !Enabled ? "已停用" : Reachable ? "在线" : UsbRecoveryReady ? "需要恢复" : "等待 USB"
+    };
+    public string LastAction => RuntimeLastAction.Length > 0 ? RuntimeLastAction : !Enabled
         ? "配置中已停用"
         : Reachable
             ? $"已连接 {Endpoint}"
@@ -429,6 +450,7 @@ public sealed record AdbConfiguredWifiDevice(
     public bool IsHealthy => Enabled && Reachable;
     public bool NeedsRecovery => Enabled && !Reachable && UsbRecoveryReady;
     public bool HasError => Enabled && !Reachable && !UsbRecoveryReady;
+    public bool IsRecovering => string.Equals(RuntimeStatus, "recovering", StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed record AdbForwarderConfiguredState(

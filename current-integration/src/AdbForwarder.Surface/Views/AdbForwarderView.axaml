@@ -28,7 +28,7 @@
   <StackPanel Spacing="{DynamicResource MptSpacingL}"
               MaxWidth="1480"
               HorizontalAlignment="Stretch">
-    <Grid ColumnDefinitions="*,Auto"
+    <Grid ColumnDefinitions="*,Auto,Auto"
           ColumnSpacing="{DynamicResource MptSpacingM}">
       <Grid ColumnDefinitions="46,*"
             ColumnSpacing="{DynamicResource MptSpacingM}">
@@ -52,7 +52,14 @@
                      Text="管理 Android 设备与 Windows 端口转发" />
         </StackPanel>
       </Grid>
-      <controls:MptButton Grid.Column="1"
+      <Border Grid.Column="1"
+              Classes="MptStatusBadge"
+              Classes.running="{Binding ServiceIsActive}"
+              Classes.degraded="{Binding ServiceNeedsAttention}"
+              VerticalAlignment="Center">
+        <TextBlock Text="{Binding ServiceStateLabel}" Classes="MptMeta" />
+      </Border>
+      <controls:MptButton Grid.Column="2"
                           Content="刷新"
                           Command="{Binding RefreshCommand}"
                           VerticalAlignment="Center" />
@@ -134,7 +141,7 @@
                 <TextBlock Text="持续维护" Classes="MptMeta" />
               </Border>
             </Grid>
-            <TextBlock Text="每台 USB 设备绑定一个固定共享端口。后台维持 ADB forward，并将共享端口映射到本机内部端口。"
+            <TextBlock Text="每台 USB 设备绑定一个固定共享端口，由后台服务持续维护。"
                        Classes="MptMeta" TextWrapping="Wrap" />
             <Grid ColumnDefinitions="1.65*,0.7*,0.85*,0.95*" ColumnSpacing="10">
               <TextBlock Text="设备 ID" Classes="MptMeta" />
@@ -151,12 +158,18 @@
                     <Grid ColumnDefinitions="1.65*,0.7*,0.85*,0.95*" ColumnSpacing="10">
                       <StackPanel Spacing="2">
                         <TextBlock Text="{Binding DeviceId}" Classes="MptMono" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding InternalEndpoint, StringFormat='ADB → {0}'}" Classes="MptMeta" />
+                        <TextBlock Text="{Binding LastAction}" Classes="MptMeta" TextTrimming="CharacterEllipsis" />
                       </StackPanel>
                       <TextBlock Grid.Column="1" Text="{Binding Port}" VerticalAlignment="Center" />
                       <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding StatusLabel}" FontWeight="SemiBold" />
-                        <TextBlock Text="{Binding PortProxyReady, StringFormat='端口映射 {0}'}" Classes="MptMeta" />
+                        <Border Classes="MptStatusBadge"
+                                Classes.running="{Binding IsOnline}"
+                                Classes.degraded="{Binding IsOffline}"
+                                Classes.error="{Binding IsDisconnected}"
+                                HorizontalAlignment="Left">
+                          <TextBlock Text="{Binding StatusLabel}" Classes="MptMeta" />
+                        </Border>
+                        <TextBlock Text="{Binding ForwardingLabel}" Classes="MptMeta" />
                       </StackPanel>
                       <TextBlock Grid.Column="3" Text="{Binding LastSeenText}" Classes="MptMeta"
                                  VerticalAlignment="Center" />
@@ -182,7 +195,7 @@
                 <TextBlock Text="定时检查" Classes="MptMeta" />
               </Border>
             </Grid>
-            <TextBlock Text="定时检查 Wi-Fi ADB 端点；端点失联时，使用配对的 USB 序列号重新执行 adb tcp。"
+            <TextBlock Text="定时检查无线设备；失联时由后台服务通过配对的 USB 连接自动恢复。"
                        Classes="MptMeta" TextWrapping="Wrap" />
             <Grid ColumnDefinitions="0.75*,1.15*,1.15*,0.85*" ColumnSpacing="10">
               <TextBlock Text="名称" Classes="MptMeta" />
@@ -202,7 +215,14 @@
                         <TextBlock Grid.Column="1" Text="{Binding Endpoint}" Classes="MptMono" />
                         <TextBlock Grid.Column="2" Text="{Binding UsbSerial}" Classes="MptMono"
                                    TextTrimming="CharacterEllipsis" />
-                        <TextBlock Grid.Column="3" Text="{Binding StatusLabel}" FontWeight="SemiBold" />
+                        <Border Grid.Column="3"
+                                Classes="MptStatusBadge"
+                                Classes.running="{Binding IsHealthy}"
+                                Classes.degraded="{Binding IsRecovering}"
+                                Classes.error="{Binding HasError}"
+                                HorizontalAlignment="Left">
+                          <TextBlock Text="{Binding StatusLabel}" Classes="MptMeta" />
+                        </Border>
                       </Grid>
                       <TextBlock Text="{Binding LastAction}" Classes="MptMeta" TextWrapping="Wrap" />
                     </StackPanel>
@@ -408,7 +428,7 @@
               <Border Classes="MptInset"
                       IsVisible="{Binding !BrokerAvailable}">
                 <StackPanel Spacing="{DynamicResource MptSpacingXs}">
-                  <TextBlock Text="管理员写操作已安全禁用"
+                  <TextBlock Text="端口更改暂不可用"
                              FontWeight="SemiBold" />
                   <TextBlock Text="{Binding BrokerAvailabilityMessage}"
                              Classes="MptMeta"
@@ -772,9 +792,9 @@
           <StackPanel Spacing="{DynamicResource MptSpacingM}">
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Spacing="{DynamicResource MptSpacingXs}">
-                <TextBlock Classes="MptSectionTitle" Text="当前 Windows 规则" />
+                <TextBlock Classes="MptSectionTitle" Text="已启用的共享端口" />
                 <TextBlock Classes="MptPageSubtitle"
-                           Text="显示 Windows 当前正在使用的端口转发状态" />
+                           Text="这里只显示用户需要使用的端口；内部桥接细节位于诊断页" />
               </StackPanel>
               <Border Grid.Column="1"
                       Classes="MptStatusBadge"
@@ -784,28 +804,28 @@
               </Border>
             </Grid>
 
-            <ItemsControl ItemsSource="{Binding CurrentRules}">
+            <ItemsControl ItemsSource="{Binding ActiveSharedDevices}">
               <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="services:AdbForwarderRule">
-                  <Grid ColumnDefinitions="*,Auto,*"
+                <DataTemplate x:DataType="services:AdbConfiguredForwardDevice">
+                  <Grid ColumnDefinitions="Auto,*,Auto"
                         ColumnSpacing="{DynamicResource MptSpacingM}"
                         Margin="{DynamicResource MptGapBottomXs}">
-                    <TextBlock Classes="MptMono"
-                               Text="{Binding ListenEndpoint}" />
-                    <TextBlock Grid.Column="1"
-                               Text="→"
-                               Foreground="{DynamicResource MptBrushTextMuted}" />
-                    <TextBlock Grid.Column="2"
-                               Classes="MptMono"
-                               Text="{Binding ConnectEndpoint}" />
+                    <Border Classes="MptStatusBadge running" VerticalAlignment="Center">
+                      <TextBlock Text="已启用" Classes="MptMeta" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="2">
+                      <TextBlock Text="{Binding SharedPortLabel}" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding DeviceId}" Classes="MptMeta" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding ForwardingLabel}" Classes="MptMeta" VerticalAlignment="Center" />
                   </Grid>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <TextBlock Text="当前没有生效的 Windows 转发规则。"
+            <TextBlock Text="当前没有已启用的 ADB 共享端口。"
                        Classes="MptPageSubtitle"
-                       IsVisible="{Binding !HasCurrentRules}" />
+                       IsVisible="{Binding !HasActiveSharedDevices}" />
             <controls:MptButton Content="导入当前规则"
                                 Command="{Binding ImportCurrentRulesCommand}"
                                 HorizontalAlignment="Left" />
@@ -832,7 +852,7 @@
             <Border Classes="MptInset"
                     IsVisible="{Binding !BrokerAvailable}">
               <StackPanel Spacing="{DynamicResource MptSpacingS}">
-                <TextBlock Text="管理员写操作已安全禁用"
+                <TextBlock Text="端口更改暂不可用"
                            Classes="MptCardTitle" />
                 <TextBlock Text="{Binding BrokerAvailabilityMessage}"
                            TextWrapping="Wrap" />
@@ -911,35 +931,15 @@
                                           Content="移除"
                                           Command="{Binding RemoveCommand}" />
                     </Grid>
-                    <Grid RowDefinitions="Auto,Auto"
-                          ColumnDefinitions="48,*,132"
-                          RowSpacing="{DynamicResource MptSpacingS}"
+                    <Grid ColumnDefinitions="Auto,*"
                           ColumnSpacing="{DynamicResource MptSpacingS}">
-                      <TextBlock Text="监听"
+                      <TextBlock Text="共享端口"
                                  VerticalAlignment="Center"
                                  Foreground="{DynamicResource MptBrushTextSecondary}" />
                       <controls:MptTextBox Grid.Column="1"
-                                           Text="{Binding ListenAddress, Mode=TwoWay}"
-                                           AutomationProperties.Name="监听地址"
-                                           PlaceholderText="监听地址" />
-                      <controls:MptTextBox Grid.Column="2"
-                                           AutomationProperties.Name="监听端口"
-                                           Text="{Binding ListenPort, Mode=TwoWay}"
-                                           PlaceholderText="端口" />
-                      <TextBlock Grid.Row="1"
-                                 Text="目标"
-                                 VerticalAlignment="Center"
-                                 Foreground="{DynamicResource MptBrushTextSecondary}" />
-                      <controls:MptTextBox Grid.Row="1"
-                                           Grid.Column="1"
-                                           AutomationProperties.Name="目标地址"
-                                           Text="{Binding ConnectAddress, Mode=TwoWay}"
-                                           PlaceholderText="目标地址" />
-                      <controls:MptTextBox Grid.Row="1"
-                                           Grid.Column="2"
-                                           AutomationProperties.Name="目标端口"
-                                           Text="{Binding ConnectPort, Mode=TwoWay}"
-                                           PlaceholderText="端口" />
+                                           AutomationProperties.Name="共享端口"
+                                           Text="{Binding SharedPort, Mode=TwoWay}"
+                                           PlaceholderText="例如 15555" />
                     </Grid>
                     <TextBlock Text="{Binding ValidationMessage}"
                                Foreground="{DynamicResource MptBrushDanger}"

@@ -13,10 +13,11 @@
         "windows-x64",
         "windows-arm64",
         "linux-x64",
-        "macos-arm64"
+        "macos-arm64",
+        "macos-x64"
       ],
       "assembly": "AdbForwarder.MyPowerTools.dll",
-      "type": "AdbForwarder.MyPowerTools.AdbForwarderModule"
+      "type": "AdbForwarder.MyPowerTools.AdbForwarderServiceProxyModule"
     }
   ],
   "capabilities": [
@@ -43,11 +44,11 @@
       "status": "inproc-or-sidecar",
       "settings": "inproc-or-sidecar",
       "commandProvider": "inproc-or-sidecar",
-      "longRunningCommand": "inproc-or-sidecar",
+      "longRunningCommand": "sidecar-required",
       "systemMutation": "broker-required",
       "nativeHardware": "sidecar-required",
       "elevatedWrite": "broker-required",
-      "externalProcess": "inproc-or-sidecar"
+      "externalProcess": "sidecar-required"
     }
   },
   "requires": [

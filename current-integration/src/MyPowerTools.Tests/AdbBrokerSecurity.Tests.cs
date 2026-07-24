@@ -13,12 +13,20 @@ public sealed class AdbBrokerSecurityTests
     private static readonly string Root = FindRepositoryRoot();
 
     [Fact]
-    public void Development_build_fails_closed_without_a_protected_release_broker()
+    public void Resolver_uses_the_installed_user_level_release_broker_when_available()
     {
         var availability = new AdbForwarderElevationService().GetAvailability();
 
-        Assert.False(availability.IsAvailable);
-        Assert.Contains("安全禁用", availability.Message, StringComparison.Ordinal);
+        if (availability.IsAvailable)
+        {
+            var launch = new InstalledAdbForwarderBrokerLaunchResolver().Resolve();
+            Assert.True(WindowsProtectedExecutable.IsTrusted(launch.ExecutablePath, out _));
+            Assert.Equal(64, launch.Sha256.Length);
+        }
+        else
+        {
+            Assert.Contains("管理员组件尚未安装", availability.Message, StringComparison.Ordinal);
+        }
     }
 
     [Fact]
@@ -347,6 +355,8 @@ public sealed class AdbBrokerSecurityTests
             Root, "src", "MyPowerTools.ElevatedBroker", "MyPowerTools.ElevatedBroker.csproj"));
         var brokerProgram = File.ReadAllText(Path.Combine(
             Root, "src", "MyPowerTools.ElevatedBroker", "Program.cs"));
+        var brokerManifest = File.ReadAllText(Path.Combine(
+            Root, "src", "MyPowerTools.ElevatedBroker", "app.manifest"));
         var validationScript = File.ReadAllText(Path.Combine(
             Root, "scripts", "validate-elevated-broker.ps1"));
 
@@ -356,20 +366,23 @@ public sealed class AdbBrokerSecurityTests
         Assert.Contains("netsh portproxy list failed", networkSource);
         Assert.Contains("throw new InvalidOperationException", networkSource);
         Assert.Contains("MyPowerTools.ElevatedBroker.exe", elevationSource);
+        Assert.Contains("SpecialFolder.LocalApplicationData", elevationSource);
+        Assert.Contains("Verb = \"runas\"", elevationSource);
         Assert.DoesNotContain("dotnet.exe", elevationSource, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Portproxy writes are accepted only through the installed MyPowerTools.ElevatedBroker.exe", cliSource);
         Assert.DoesNotContain("ApplyChangeSetAsync", cliSource, StringComparison.Ordinal);
         Assert.DoesNotContain("#if false", cliSource, StringComparison.Ordinal);
-        Assert.Contains("Join-Path $env:ProgramFiles 'MyPowerTools'", installer);
-        Assert.Contains("Run this installer from an elevated PowerShell session", installer);
+        Assert.Contains("Join-Path $env:LOCALAPPDATA 'Programs\\MyPowerTools'", installer);
+        Assert.DoesNotContain("Run this installer from an elevated PowerShell session", installer, StringComparison.Ordinal);
         Assert.Contains("foreach ($process in Get-Process -ErrorAction SilentlyContinue)", uninstaller);
         Assert.Contains("Test-IsInsidePath -Parent $Root -Child $path", uninstaller);
         Assert.Contains("<PublishAot>true</PublishAot>", brokerProject);
         Assert.Contains("<PublishSingleFile>true</PublishSingleFile>", brokerProject);
+        Assert.Contains("<ApplicationManifest>app.manifest</ApplicationManifest>", brokerProject);
+        Assert.Contains("level=\"requireAdministrator\"", brokerManifest);
         Assert.Contains("new AuditLog(auditPath, brokerRoot)", brokerProgram);
         Assert.Contains("CLR header", validationScript);
-        Assert.Contains("DOTNET_STARTUP_HOOKS", validationScript);
-        Assert.Contains("CORECLR_ENABLE_PROFILING", validationScript);
+        Assert.Contains("requireAdministrator", validationScript);
     }
 
     private static ExecutorRequest CreateExecutorRequest(

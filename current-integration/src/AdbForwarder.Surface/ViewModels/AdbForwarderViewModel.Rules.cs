@@ -28,11 +28,11 @@ public sealed partial class AdbForwarderViewModel
             $"映射 {Mappings.Count + 1}",
             true,
             "0.0.0.0",
-            0,
+            15555,
             "127.0.0.1",
-            0)));
+            30555)));
         NotifyMappingCount();
-        ActionMessage = "已添加一条映射。填写两个端口后即可预览更改。";
+        ActionMessage = "已添加一条共享端口。确认端口后即可预览更改。";
         return Task.CompletedTask;
     }
 

@@ -61,7 +61,27 @@ public sealed class AdbForwarderMappingEditorViewModel : MyPowerTools.AvaloniaSd
     public string ListenPort
     {
         get => _listenPort;
-        set => SetProperty(ref _listenPort, value);
+        set
+        {
+            if (!SetProperty(ref _listenPort, value))
+            {
+                return;
+            }
+
+            _listenAddress = "0.0.0.0";
+            _connectAddress = "127.0.0.1";
+            if (TryPort(value, out var sharedPort) && sharedPort <= 50535)
+            {
+                _connectPort = (sharedPort + 15000).ToString(CultureInfo.InvariantCulture);
+            }
+            OnPropertyChanged(nameof(SharedPort));
+        }
+    }
+
+    public string SharedPort
+    {
+        get => ListenPort;
+        set => ListenPort = value;
     }
 
     public string ConnectAddress
@@ -93,31 +113,25 @@ public sealed class AdbForwarderMappingEditorViewModel : MyPowerTools.AvaloniaSd
     public bool TryBuild(out AdbForwarderMapping mapping)
     {
         var errors = new List<string>();
-        if (string.IsNullOrWhiteSpace(ListenAddress))
-        {
-            errors.Add("请输入监听地址。");
-        }
-        if (string.IsNullOrWhiteSpace(ConnectAddress))
-        {
-            errors.Add("请输入目标地址。");
-        }
         if (!TryPort(ListenPort, out var listenPort))
         {
-            errors.Add("监听端口需要在 1 到 65535 之间。");
+            errors.Add("共享端口需要在 1 到 50535 之间。");
         }
-        if (!TryPort(ConnectPort, out var connectPort))
+        else if (listenPort > 50535)
         {
-            errors.Add("目标端口需要在 1 到 65535 之间。");
+            errors.Add("共享端口需要在 1 到 50535 之间。");
         }
+
+        var connectPort = listenPort is >= 1 and <= 50535 ? listenPort + 15000 : 0;
 
         ValidationMessage = string.Join(" ", errors);
         mapping = new AdbForwarderMapping(
             Id,
-            string.IsNullOrWhiteSpace(Name) ? $"{ListenAddress}:{ListenPort}" : Name.Trim(),
+            string.IsNullOrWhiteSpace(Name) ? $"共享端口 {ListenPort}" : Name.Trim(),
             Enabled,
-            ListenAddress.Trim(),
+            "0.0.0.0",
             listenPort,
-            ConnectAddress.Trim(),
+            "127.0.0.1",
             connectPort);
         return errors.Count == 0;
     }

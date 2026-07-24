@@ -3,19 +3,19 @@
   "Files": [
     {
       "Path": "AdbForwarder.MyPowerTools.dll",
-      "Sha256": "73439e0a679930c122667845ab15268d2a911a12ec833f626f5d6b70f1c43fcb"
+      "Sha256": "07b5b9d28aae70b957ad30af52e5eb9345f494b63a18598ffcde3cb4f8793ebe"
     },
     {
       "Path": "AdbForwarder.MyPowerTools.pdb",
-      "Sha256": "a4426b25b58cc5d0a4ec732b74ea2198145b3b22a1fac2cc5acdff83ce7bb858"
+      "Sha256": "181b123a6de5e9ae35077885632933f70640b4122f06d03d10975de5dcb007bb"
     },
     {
       "Path": "commands.index.json",
-      "Sha256": "c84cc53055d19134703d6288f4c60b2c52e31452998d9230f33441db0feb389e"
+      "Sha256": "cf2abd40ba148b57906514a854c2a43da88b21f675c3b2c84e0101577d1f55ab"
     },
     {
       "Path": "module.json",
-      "Sha256": "100777eca9f602fc3b8a40ebd0a9e16630809e1f6c42cd6f4c19d3f68d825b1c"
+      "Sha256": "9773ec68834705602707a923e1c02b88e11ed7ef9442764c0d68e1b1e0ace1d7"
     },
     {
       "Path": "ui/dashboard-card.json",
@@ -35,7 +35,7 @@
     },
     {
       "Path": "ui/tool.json",
-      "Sha256": "90a38e55f1bca692b443b6a5510c854ec1c23498b4b23a42b653eccdf3024235"
+      "Sha256": "5c6132a61ef83d4707de1c5ca435345b7fd0ccca1b1586d8dc4ae07f613c289c"
     }
   ]
 }

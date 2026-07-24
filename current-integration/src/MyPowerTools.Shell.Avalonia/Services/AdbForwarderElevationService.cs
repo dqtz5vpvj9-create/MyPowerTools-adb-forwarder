@@ -40,22 +40,34 @@ public sealed class InstalledAdbForwarderBrokerLaunchResolver : IAdbForwarderBro
             throw new PlatformNotSupportedException("管理员 Broker 仅支持 Windows。");
         }
 
+        var candidates = new List<string>();
         var shellDirectory = new DirectoryInfo(Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory));
-        if (!string.Equals(shellDirectory.Name, "Shell", StringComparison.OrdinalIgnoreCase) || shellDirectory.Parent is null)
+        if (string.Equals(shellDirectory.Name, "Shell", StringComparison.OrdinalIgnoreCase) && shellDirectory.Parent is not null)
         {
-            throw new InvalidOperationException("当前为开发工作区构建，管理员写操作已安全禁用。请使用安装在 ACL 保护目录中的发布版。");
+            candidates.Add(Path.Combine(shellDirectory.Parent.FullName, "Broker", "MyPowerTools.ElevatedBroker.exe"));
         }
 
-        var executable = Path.GetFullPath(Path.Combine(
-            shellDirectory.Parent.FullName,
-            "Broker",
-            "MyPowerTools.ElevatedBroker.exe"));
-        if (!WindowsProtectedExecutable.IsTrusted(executable, out var reason))
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (!string.IsNullOrWhiteSpace(localAppData))
         {
-            throw new InvalidOperationException($"管理员写操作已安全禁用：{reason}");
+            candidates.Add(Path.Combine(
+                localAppData,
+                "Programs",
+                "MyPowerTools",
+                "Broker",
+                "MyPowerTools.ElevatedBroker.exe"));
         }
 
-        return new AdbForwarderBrokerLaunch(executable, HashFile(executable));
+        foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var executable = Path.GetFullPath(candidate);
+            if (WindowsProtectedExecutable.IsTrusted(executable, out _))
+            {
+                return new AdbForwarderBrokerLaunch(executable, HashFile(executable));
+            }
+        }
+
+        throw new InvalidOperationException("管理员组件尚未安装。重新运行 MyPowerTools 用户级安装程序后即可应用端口更改。");
     }
 
     internal static string HashFile(string path)
@@ -207,7 +219,7 @@ public sealed class AdbForwarderElevationService
         try
         {
             _ = _launchResolver.Resolve();
-            return new AdbForwarderBrokerAvailability(true, "管理员 Broker 已通过发布路径与 ACL 校验。");
+            return new AdbForwarderBrokerAvailability(true, "管理员 Broker 已安装；特权操作会自动触发 Windows UAC。");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or PlatformNotSupportedException)
         {

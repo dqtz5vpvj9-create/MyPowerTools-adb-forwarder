@@ -16,12 +16,32 @@ public sealed class AdbForwarderSurfaceFactory : IMptAvaloniaSurfaceFactory
 {
     public Control CreateSurface(MptAvaloniaSurfaceContext context)
     {
-        return CreateAsync(context).GetAwaiter().GetResult();
+        var host = new ContentControl
+        {
+            Content = CreateLoadingView()
+        };
+
+        _ = PopulateAsync(host, context);
+        return host;
     }
 
-    private static async Task<UserControl> CreateAsync(MptAvaloniaSurfaceContext context)
+    private static async Task PopulateAsync(ContentControl host, MptAvaloniaSurfaceContext context)
     {
-        var tools = new AdbForwarderToolService();
+        try
+        {
+            host.Content = await CreateLoadedSurfaceAsync(context);
+        }
+        catch (Exception ex)
+        {
+            context.Log(new MptSurfaceLogEntry("error", $"ADB Forwarder failed to load: {ex.Message}", DateTimeOffset.Now));
+            host.Content = CreateFailureView(host, context, ex.Message);
+        }
+    }
+
+    private static async Task<UserControl> CreateLoadedSurfaceAsync(MptAvaloniaSurfaceContext context)
+    {
+        var tools = new AdbForwarderToolService(
+            service: new AdbForwarderServiceClient(context.ServiceUnits));
         var elevation = new AdbForwarderElevationService();
 
         var snapshot = await tools.LoadAsync();
@@ -41,7 +61,7 @@ public sealed class AdbForwarderSurfaceFactory : IMptAvaloniaSurfaceFactory
             browseAllTools: () => context.NavigateAsync("", "", null),
             refresh: async () =>
             {
-                var fresh = await tools.LoadAsync();
+                var fresh = await tools.LoadAsync(refreshService: true);
                 var ba = elevation.GetAvailability();
                 fresh = fresh with { BrokerAvailable = ba.IsAvailable, BrokerAvailabilityMessage = ba.Message };
                 viewModel.UpdateSnapshot(fresh);
@@ -73,5 +93,49 @@ public sealed class AdbForwarderSurfaceFactory : IMptAvaloniaSurfaceFactory
             });
 
         return new AdbForwarderView { DataContext = viewModel };
+    }
+
+    private static Control CreateLoadingView() =>
+        new Border
+        {
+            Padding = new Avalonia.Thickness(32),
+            Child = new StackPanel
+            {
+                Spacing = 8,
+                Children =
+                {
+                    new TextBlock { Text = "ADB Forwarder", FontSize = 30, FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                    new TextBlock { Text = "正在读取有线设备、无线设备与端口转发状态…" },
+                    new ProgressBar { IsIndeterminate = true, Width = 240, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left }
+                }
+            }
+        };
+
+    private static Control CreateFailureView(
+        ContentControl host,
+        MptAvaloniaSurfaceContext context,
+        string message)
+    {
+        var retry = new Button { Content = "Retry", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left };
+        retry.Click += (_, _) =>
+        {
+            host.Content = CreateLoadingView();
+            _ = PopulateAsync(host, context);
+        };
+
+        return new Border
+        {
+            Padding = new Avalonia.Thickness(32),
+            Child = new StackPanel
+            {
+                Spacing = 12,
+                Children =
+                {
+                    new TextBlock { Text = "ADB Forwarder could not load", FontSize = 26, FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                    new TextBlock { Text = message, TextWrapping = Avalonia.Media.TextWrapping.Wrap },
+                    retry
+                }
+            }
+        };
     }
 }

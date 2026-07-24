@@ -21,6 +21,9 @@ public sealed partial class AdbForwarderViewModel
     public bool HasActivity => Activity.Count > 0;
     public bool HasConfiguredForwardDevices => ConfiguredForwardDevices.Count > 0;
     public bool HasConfiguredWifiDevices => ConfiguredWifiDevices.Count > 0;
+    public IReadOnlyList<AdbConfiguredForwardDevice> ActiveSharedDevices =>
+        ConfiguredForwardDevices.Where(device => device.PortProxyReady).ToArray();
+    public bool HasActiveSharedDevices => ActiveSharedDevices.Count > 0;
     public bool HasConfigurationError => Snapshot.ConfiguredState.Error.Length > 0;
     public string ConfigurationError => Snapshot.ConfiguredState.Error;
     public string ConfigurationPath => Snapshot.ConfiguredState.ConfigPath;
@@ -29,6 +32,13 @@ public sealed partial class AdbForwarderViewModel
         : $"WakeupPad · {Snapshot.ConfiguredState.WakeupPadDeviceId}";
     public string ForwardFleetSummary => $"{ConfiguredForwardDevices.Count} 台已配置 · {ConfiguredForwardDevices.Count(device => device.IsOnline)} 台在线";
     public string WifiFleetSummary => $"{ConfiguredWifiDevices.Count} 台已配置 · {ConfiguredWifiDevices.Count(device => device.IsHealthy)} 台可连接";
+    public bool HasServiceStatus => Snapshot.ServiceStatus is not null;
+    public bool ServiceIsActive => Snapshot.ServiceStatus?.IsActive == true;
+    public bool ServiceNeedsAttention => Snapshot.ServiceStatus is not null && !Snapshot.ServiceStatus.IsActive;
+    public string ServiceStateLabel => Snapshot.ServiceStatus is null
+        ? "后台服务未连接"
+        : Snapshot.ServiceStatus.IsActive ? "后台服务运行中" : "后台服务需要处理";
+    public string ServiceSummary => Snapshot.ServiceStatus?.Summary ?? "刷新后重新连接 ADB Forwarder Service。";
     public IReadOnlyList<AdbForwarderDevice> ForwardDevices => DevicesForMode(ConnectionMode);
     public IReadOnlyList<AdbForwarderDevice> WiredForwardDevices => DevicesForMode(AdbForwardConnectionMode.Wired);
     public IReadOnlyList<AdbForwarderDevice> WirelessForwardDevices => DevicesForMode(AdbForwardConnectionMode.Wireless);
@@ -220,9 +230,9 @@ public sealed partial class AdbForwarderViewModel
         ? "选择 USB ADB 设备，配置设备 TCP 后通过主机端口向本机与可选远端提供连接。"
         : "选择已经连接的 host:port 网络 ADB 设备，保持设备网络配置并建立主机与可选远端转发。";
     public string ForwardPathSummary => IsWiredForward
-        ? $"USB ADB → 设备 TCP {DevicePort} → 127.0.0.1:{LocalForwardPort} → 共享端口 {SharedPort}"
-        : $"Wi-Fi ADB → 127.0.0.1:{LocalForwardPort} → 共享端口 {SharedPort}";
-    public string ForwardEndpointSummary => $"127.0.0.1:{LocalForwardPort} · 共享端口 {SharedPort} · 设备端口 {DevicePort}";
+        ? $"USB 设备 → 共享端口 {SharedPort}"
+        : $"Wi-Fi 设备 → 共享端口 {SharedPort}";
+    public string ForwardEndpointSummary => $"共享端口 {SharedPort} · Android ADB 端口 {DevicePort}";
     public string PreflightSummary => _preflight?.Summary ?? "尚未运行预检";
     public bool PreflightCanRun => _preflight?.CanRun ?? false;
     public bool CanPreflightForward => !IsForwardBusy && SelectedForwardDevice is not null;
