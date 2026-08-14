@@ -448,8 +448,9 @@ public sealed record AdbConfiguredWifiDevice(
                 ? $"可通过 USB {UsbSerial} 执行 adb tcp {Port}"
                 : $"等待 USB {UsbSerial} 连接";
     public bool IsHealthy => Enabled && Reachable;
-    public bool NeedsRecovery => Enabled && !Reachable && UsbRecoveryReady;
+    public bool NeedsRecovery => Enabled && !Reachable && UsbRecoveryReady && !IsRecovering;
     public bool HasError => Enabled && !Reachable && !UsbRecoveryReady;
+    public bool IsDisabled => !Enabled;
     public bool IsRecovering => string.Equals(RuntimeStatus, "recovering", StringComparison.OrdinalIgnoreCase);
 }
 

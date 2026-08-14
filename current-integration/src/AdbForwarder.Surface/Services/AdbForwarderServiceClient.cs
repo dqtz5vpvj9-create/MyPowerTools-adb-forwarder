@@ -120,6 +120,7 @@ public sealed record AdbForwarderServiceDevice(
     int PublicPort,
     int InternalPort,
     string Status,
+    DateTimeOffset LastSeenOnline,
     bool PortProxyReady,
     bool AdbForwardReady,
     string LastAction);

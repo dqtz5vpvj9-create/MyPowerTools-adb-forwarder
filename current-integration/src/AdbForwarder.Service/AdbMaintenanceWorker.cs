@@ -23,6 +23,7 @@ internal sealed class AdbMaintenanceWorker
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
     private readonly object _stateGate = new();
     private readonly Queue<string> _activity = new();
+    private readonly Dictionary<string, DateTimeOffset> _lastSeenOnline = new(StringComparer.OrdinalIgnoreCase);
     private AdbServiceState _state;
     private DateTimeOffset _lastWakeup = DateTimeOffset.MinValue;
 
@@ -105,6 +106,10 @@ internal sealed class AdbMaintenanceWorker
             foreach (var entry in configuration.ForwardDevices)
             {
                 var deviceState = devices.GetValueOrDefault(entry.DeviceId, "disconnected");
+                if (string.Equals(deviceState, "device", StringComparison.OrdinalIgnoreCase))
+                {
+                    _lastSeenOnline[entry.DeviceId] = DateTimeOffset.Now;
+                }
                 var internalPort = checked(entry.Port + 15000);
                 var proxyReady = rules.Any(rule =>
                     rule.ListenPort == entry.Port &&
@@ -130,6 +135,7 @@ internal sealed class AdbMaintenanceWorker
                     entry.Port,
                     internalPort,
                     NormalizeDeviceState(deviceState),
+                    _lastSeenOnline.GetValueOrDefault(entry.DeviceId),
                     proxyReady,
                     forwardReady,
                     lastAction));
@@ -393,6 +399,7 @@ internal sealed record AdbForwardDeviceState(
     int PublicPort,
     int InternalPort,
     string Status,
+    DateTimeOffset LastSeenOnline,
     bool PortProxyReady,
     bool AdbForwardReady,
     string LastAction);

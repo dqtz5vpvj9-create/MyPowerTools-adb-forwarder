@@ -6,235 +6,49 @@
              x:Class="AdbForwarder.Surface.Views.AdbForwarderView"
              x:DataType="vm:AdbForwarderViewModel">
   <UserControl.Styles>
-    <Style Selector="Button.forward-mode">
+    <Style Selector="Button.connection-mode">
       <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-      <Setter Property="Padding" Value="16,12" />
-      <Setter Property="MinHeight" Value="78" />
-      <Setter Property="Background" Value="{DynamicResource MptBrushCardBackground}" />
+      <Setter Property="Padding" Value="14,12" />
+      <Setter Property="Background" Value="{DynamicResource MptBrushSurfaceMuted}" />
       <Setter Property="BorderBrush" Value="{DynamicResource MptBrushBorder}" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="CornerRadius" Value="9" />
     </Style>
-    <Style Selector="Button.forward-mode:pointerover">
+    <Style Selector="Button.connection-mode:pointerover">
       <Setter Property="Background" Value="{DynamicResource MptBrushLayerAltBackground}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource MptBrushBorderStrong}" />
     </Style>
-    <Style Selector="Button.forward-mode.selected">
+    <Style Selector="Button.connection-mode.selected">
       <Setter Property="Background" Value="{DynamicResource MptBrushNavigationSelected}" />
       <Setter Property="BorderBrush" Value="{DynamicResource MptBrushAccent}" />
       <Setter Property="BorderThickness" Value="2" />
     </Style>
   </UserControl.Styles>
-  <StackPanel Spacing="{DynamicResource MptSpacingL}"
-              MaxWidth="1480"
-              HorizontalAlignment="Stretch">
-    <Grid ColumnDefinitions="*,Auto,Auto"
-          ColumnSpacing="{DynamicResource MptSpacingM}">
-      <Grid ColumnDefinitions="46,*"
-            ColumnSpacing="{DynamicResource MptSpacingM}">
-        <Border Width="40"
-                Height="40"
-                CornerRadius="10"
-                Background="{DynamicResource MptBrushAccent}">
-          <TextBlock Text="ADB"
-                     FontSize="{DynamicResource MptFontSizeCaption}"
-                     FontWeight="Bold"
-                     Foreground="White"
-                     HorizontalAlignment="Center"
-                     VerticalAlignment="Center" />
-        </Border>
-        <StackPanel Grid.Column="1"
-                    Spacing="{DynamicResource MptSpacingXs}"
-                    VerticalAlignment="Center">
-          <TextBlock Classes="MptPageTitle"
-                     Text="ADB Forwarder" />
-          <TextBlock Classes="MptPageSubtitle"
-                     Text="管理 Android 设备与 Windows 端口转发" />
-        </StackPanel>
-      </Grid>
-      <Border Grid.Column="1"
-              Classes="MptStatusBadge"
-              Classes.running="{Binding ServiceIsActive}"
-              Classes.degraded="{Binding ServiceNeedsAttention}"
-              VerticalAlignment="Center">
-        <TextBlock Text="{Binding ServiceStateLabel}" Classes="MptMeta" />
-      </Border>
-      <controls:MptButton Grid.Column="2"
-                          Content="刷新"
-                          Command="{Binding RefreshCommand}"
-                          VerticalAlignment="Center" />
-    </Grid>
-
-    <Border Classes="MptInset"
-            Padding="{DynamicResource MptCompactPadding}"
-            MinHeight="42">
-      <Grid ColumnDefinitions="Auto,Auto,1,Auto,Auto,1,Auto,Auto,*"
-            ColumnSpacing="8"
-            VerticalAlignment="Center">
-        <TextBlock Classes="MptMeta"
-                   Text="ADB" />
-        <TextBlock Grid.Column="1"
-                   Text="{Binding AdbStateLabel}"
-                   FontWeight="SemiBold" />
-        <Border Grid.Column="2"
-                Width="1"
-                Height="20"
-                Background="{DynamicResource MptBrushDivider}" />
-        <TextBlock Grid.Column="3"
-                   Classes="MptMeta"
-                   Text="设备" />
-        <TextBlock Grid.Column="4"
-                   Text="{Binding DeviceCountText}"
-                   FontWeight="SemiBold" />
-        <Border Grid.Column="5"
-                Width="1"
-                Height="20"
-                Background="{DynamicResource MptBrushDivider}" />
-        <TextBlock Grid.Column="6"
-                   Classes="MptMeta"
-                   Text="Windows 转发" />
-        <TextBlock Grid.Column="7"
-                   Text="{Binding RuleCountText}"
-                   FontWeight="SemiBold" />
-      </Grid>
-    </Border>
-
-    <StackPanel Orientation="Horizontal" Spacing="{DynamicResource MptSpacingS}">
-      <controls:MptButton Content="转发设备"
-                          AutomationProperties.Name="转发设备"
-                          Command="{Binding ShowForwardCommand}"
-                          Classes.MptPrimaryButton="{Binding IsForward}" />
-      <controls:MptButton Content="转发规则"
-                          AutomationProperties.Name="转发规则"
-                          Command="{Binding ShowRulesCommand}"
-                          Classes.MptPrimaryButton="{Binding IsRules}" />
-      <controls:MptButton Content="设备"
-                          AutomationProperties.Name="设备"
-                          Command="{Binding ShowDevicesCommand}"
-                          Classes.MptPrimaryButton="{Binding IsDevices}" />
-      <controls:MptButton Content="设备设置"
-                          AutomationProperties.Name="设备设置"
-                          Command="{Binding ShowSettingsCommand}"
-                          Classes.MptPrimaryButton="{Binding IsSettings}" />
-      <controls:MptButton Content="活动"
-                          AutomationProperties.Name="活动"
-                          Command="{Binding ShowActivityCommand}"
-                          Classes.MptPrimaryButton="{Binding IsActivity}" />
-      <controls:MptButton Content="诊断"
-                          AutomationProperties.Name="诊断"
-                          Command="{Binding ShowDiagnosticsCommand}"
-                          Classes.MptPrimaryButton="{Binding IsDiagnostics}" />
-    </StackPanel>
-
+  <Grid>
     <StackPanel IsVisible="{Binding IsForward}"
-                Spacing="{DynamicResource MptSpacingL}">
-      <Grid ColumnDefinitions="*,*"
-            ColumnSpacing="{DynamicResource MptSpacingL}">
-        <Border Classes="MptCard">
-          <StackPanel Spacing="{DynamicResource MptSpacingM}">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-              <StackPanel Spacing="2">
-                <TextBlock Classes="MptSectionTitle" Text="有线设备转发" />
-                <TextBlock Text="{Binding ForwardFleetSummary}" Classes="MptMeta" />
-              </StackPanel>
-              <Border Grid.Column="1" Classes="MptStatusBadge running">
-                <TextBlock Text="持续维护" Classes="MptMeta" />
-              </Border>
-            </Grid>
-            <TextBlock Text="每台 USB 设备绑定一个固定共享端口，由后台服务持续维护。"
-                       Classes="MptMeta" TextWrapping="Wrap" />
-            <Grid ColumnDefinitions="1.65*,0.7*,0.85*,0.95*" ColumnSpacing="10">
-              <TextBlock Text="设备 ID" Classes="MptMeta" />
-              <TextBlock Grid.Column="1" Text="共享端口" Classes="MptMeta" />
-              <TextBlock Grid.Column="2" Text="状态" Classes="MptMeta" />
-              <TextBlock Grid.Column="3" Text="最近在线" Classes="MptMeta" />
-            </Grid>
-            <ItemsControl ItemsSource="{Binding ConfiguredForwardDevices}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="services:AdbConfiguredForwardDevice">
-                  <Border BorderBrush="{DynamicResource MptBrushDivider}"
-                          BorderThickness="0,1,0,0"
-                          Padding="0,9">
-                    <Grid ColumnDefinitions="1.65*,0.7*,0.85*,0.95*" ColumnSpacing="10">
-                      <StackPanel Spacing="2">
-                        <TextBlock Text="{Binding DeviceId}" Classes="MptMono" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding LastAction}" Classes="MptMeta" TextTrimming="CharacterEllipsis" />
-                      </StackPanel>
-                      <TextBlock Grid.Column="1" Text="{Binding Port}" VerticalAlignment="Center" />
-                      <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
-                        <Border Classes="MptStatusBadge"
-                                Classes.running="{Binding IsOnline}"
-                                Classes.degraded="{Binding IsOffline}"
-                                Classes.error="{Binding IsDisconnected}"
-                                HorizontalAlignment="Left">
-                          <TextBlock Text="{Binding StatusLabel}" Classes="MptMeta" />
-                        </Border>
-                        <TextBlock Text="{Binding ForwardingLabel}" Classes="MptMeta" />
-                      </StackPanel>
-                      <TextBlock Grid.Column="3" Text="{Binding LastSeenText}" Classes="MptMeta"
-                                 VerticalAlignment="Center" />
-                    </Grid>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <TextBlock Text="devices.ini 中没有有线设备。"
-                       IsVisible="{Binding !HasConfiguredForwardDevices}"
-                       Classes="MptMeta" />
-          </StackPanel>
-        </Border>
-
-        <Border Grid.Column="1" Classes="MptCard">
-          <StackPanel Spacing="{DynamicResource MptSpacingM}">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-              <StackPanel Spacing="2">
-                <TextBlock Classes="MptSectionTitle" Text="无线设备转发" />
-                <TextBlock Text="{Binding WifiFleetSummary}" Classes="MptMeta" />
-              </StackPanel>
-              <Border Grid.Column="1" Classes="MptStatusBadge running">
-                <TextBlock Text="定时检查" Classes="MptMeta" />
-              </Border>
-            </Grid>
-            <TextBlock Text="定时检查无线设备；失联时由后台服务通过配对的 USB 连接自动恢复。"
-                       Classes="MptMeta" TextWrapping="Wrap" />
-            <Grid ColumnDefinitions="0.75*,1.15*,1.15*,0.85*" ColumnSpacing="10">
-              <TextBlock Text="名称" Classes="MptMeta" />
-              <TextBlock Grid.Column="1" Text="无线端点" Classes="MptMeta" />
-              <TextBlock Grid.Column="2" Text="恢复用 USB" Classes="MptMeta" />
-              <TextBlock Grid.Column="3" Text="状态" Classes="MptMeta" />
-            </Grid>
-            <ItemsControl ItemsSource="{Binding ConfiguredWifiDevices}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="services:AdbConfiguredWifiDevice">
-                  <Border BorderBrush="{DynamicResource MptBrushDivider}"
-                          BorderThickness="0,1,0,0"
-                          Padding="0,9">
-                    <StackPanel Spacing="6">
-                      <Grid ColumnDefinitions="0.75*,1.15*,1.15*,0.85*" ColumnSpacing="10">
-                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="1" Text="{Binding Endpoint}" Classes="MptMono" />
-                        <TextBlock Grid.Column="2" Text="{Binding UsbSerial}" Classes="MptMono"
-                                   TextTrimming="CharacterEllipsis" />
-                        <Border Grid.Column="3"
-                                Classes="MptStatusBadge"
-                                Classes.running="{Binding IsHealthy}"
-                                Classes.degraded="{Binding IsRecovering}"
-                                Classes.error="{Binding HasError}"
-                                HorizontalAlignment="Left">
-                          <TextBlock Text="{Binding StatusLabel}" Classes="MptMeta" />
-                        </Border>
-                      </Grid>
-                      <TextBlock Text="{Binding LastAction}" Classes="MptMeta" TextWrapping="Wrap" />
-                    </StackPanel>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <TextBlock Text="devices.ini 中没有 Wi-Fi ADB 设备。"
-                       IsVisible="{Binding !HasConfiguredWifiDevices}"
-                       Classes="MptMeta" />
-          </StackPanel>
-        </Border>
+                Spacing="{DynamicResource MptSpacingM}"
+                MaxWidth="1600"
+                HorizontalAlignment="Stretch">
+      <Grid ColumnDefinitions="*,Auto"
+            ColumnSpacing="{DynamicResource MptSpacingM}">
+        <StackPanel Spacing="2" VerticalAlignment="Center">
+          <TextBlock Classes="MptPageTitle" Text="ADB Forwarder" />
+          <TextBlock Classes="MptPageSubtitle"
+                     Text="有线转发设备与 Wi-Fi ADB 设备状态" />
+        </StackPanel>
+        <StackPanel Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="{DynamicResource MptSpacingS}"
+                    VerticalAlignment="Center">
+          <Border Classes="MptStatusBadge"
+                  Classes.running="{Binding ServiceIsActive}"
+                  Classes.degraded="{Binding ServiceNeedsAttention}"
+                  VerticalAlignment="Center">
+            <TextBlock Text="{Binding ServiceStateLabel}" Classes="MptMeta" />
+          </Border>
+          <controls:MptButton Content="设置" Command="{Binding ShowSettingsCommand}" />
+          <controls:MptButton Content="诊断" Command="{Binding ShowDiagnosticsCommand}" />
+          <controls:MptButton Content="刷新" Command="{Binding RefreshCommand}" />
+        </StackPanel>
       </Grid>
 
       <Border Classes="MptInset" IsVisible="{Binding HasConfigurationError}">
@@ -245,132 +59,274 @@
         </StackPanel>
       </Border>
 
-      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-        <StackPanel Spacing="2">
-          <TextBlock Classes="MptSectionTitle" Text="单次设备操作" />
-          <TextBlock Text="需要临时建立新转发时，再选择连接方式、设备和端口并运行预检。"
-                     Classes="MptMeta" />
+      <Grid x:Name="DeviceOverviewGrid"
+            ColumnDefinitions="0.85*,1.15*"
+            ColumnSpacing="12">
+        <Border x:Name="ForwardDevicesCard"
+                Classes="MptCard"
+                Padding="0"
+                VerticalAlignment="Top">
+          <StackPanel>
+            <Grid ColumnDefinitions="*,Auto" Margin="16,14,16,10">
+              <TextBlock Classes="MptSectionTitle" Text="有线转发设备" />
+              <TextBlock Grid.Column="1"
+                         Classes="MptMeta"
+                         Text="{Binding ConfiguredForwardDevices.Count, StringFormat='共 {0} 台'}"
+                         VerticalAlignment="Center" />
+            </Grid>
+            <Border Background="{DynamicResource MptBrushSurfaceMuted}"
+                    Margin="1,0,1,0"
+                    Padding="14,8">
+              <Grid ColumnDefinitions="1.55*,0.65*,0.85*,1.25*" ColumnSpacing="12">
+                <TextBlock Classes="MptMeta" Text="ADB SERIAL" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1" Classes="MptMeta" Text="端口" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="2" Classes="MptMeta" Text="状态" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="3" Classes="MptMeta" Text="最后在线" FontWeight="SemiBold" />
+              </Grid>
+            </Border>
+            <ItemsControl ItemsSource="{Binding ConfiguredForwardDevices}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="services:AdbConfiguredForwardDevice">
+                  <Border MinHeight="42"
+                          Padding="14,7"
+                          BorderBrush="{DynamicResource MptBrushDivider}"
+                          BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="1.55*,0.65*,0.85*,1.25*" ColumnSpacing="12">
+                    <TextBlock Text="{Binding DeviceId}"
+                               Classes="MptMono"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding Port}"
+                               Classes="MptMono"
+                               VerticalAlignment="Center" />
+                    <Grid Grid.Column="2" VerticalAlignment="Center">
+                      <TextBlock Text="● 在线"
+                                 Foreground="{DynamicResource MptBrushSuccess}"
+                                 IsVisible="{Binding IsOnline}" />
+                      <TextBlock Text="● 离线"
+                                 Foreground="{DynamicResource MptBrushDanger}"
+                                 IsVisible="{Binding IsOffline}" />
+                      <TextBlock Text="● 已断开"
+                                 Foreground="{DynamicResource MptBrushDanger}"
+                                 IsVisible="{Binding IsDisconnected}" />
+                    </Grid>
+                    <TextBlock Grid.Column="3"
+                               Text="{Binding LastSeenText}"
+                               Classes="MptMono"
+                               VerticalAlignment="Center" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Border Classes="MptEmptyState"
+                    Margin="12"
+                    IsVisible="{Binding !HasConfiguredForwardDevices}">
+              <TextBlock Text="没有配置有线转发设备" HorizontalAlignment="Center" />
+            </Border>
+          </StackPanel>
+        </Border>
+
+        <Border x:Name="WifiDevicesCard"
+                Grid.Column="1"
+                Classes="MptCard"
+                Padding="0"
+                VerticalAlignment="Top">
+          <StackPanel>
+            <Grid ColumnDefinitions="*,Auto" Margin="16,14,16,10">
+              <TextBlock Classes="MptSectionTitle" Text="Wi-Fi ADB 设备" />
+              <TextBlock Grid.Column="1"
+                         Classes="MptMeta"
+                         Text="{Binding ConfiguredWifiDevices.Count, StringFormat='共 {0} 台'}"
+                         VerticalAlignment="Center" />
+            </Grid>
+            <Border Background="{DynamicResource MptBrushSurfaceMuted}"
+                    Margin="1,0,1,0"
+                    Padding="14,8">
+              <Grid ColumnDefinitions="0.8*,1.05*,1.05*,0.85*,1.45*" ColumnSpacing="12">
+                <TextBlock Classes="MptMeta" Text="名称" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1" Classes="MptMeta" Text="端点" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="2" Classes="MptMeta" Text="USB SERIAL" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="3" Classes="MptMeta" Text="状态" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="4" Classes="MptMeta" Text="最后操作" FontWeight="SemiBold" />
+              </Grid>
+            </Border>
+            <ItemsControl ItemsSource="{Binding ConfiguredWifiDevices}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="services:AdbConfiguredWifiDevice">
+                  <Border MinHeight="42"
+                          Padding="14,7"
+                          BorderBrush="{DynamicResource MptBrushDivider}"
+                          BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="0.8*,1.05*,1.05*,0.85*,1.45*" ColumnSpacing="12">
+                    <TextBlock Text="{Binding Name}"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding Endpoint}"
+                               Classes="MptMono"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding UsbSerial}"
+                               Classes="MptMono"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                    <Grid Grid.Column="3" VerticalAlignment="Center">
+                      <TextBlock Text="● 在线"
+                                 Foreground="{DynamicResource MptBrushSuccess}"
+                                 IsVisible="{Binding IsHealthy}" />
+                      <TextBlock Text="● 正在恢复"
+                                 Foreground="{DynamicResource MptBrushWarning}"
+                                 IsVisible="{Binding IsRecovering}" />
+                      <TextBlock Text="● 需要恢复"
+                                 Foreground="{DynamicResource MptBrushWarning}"
+                                 IsVisible="{Binding NeedsRecovery}" />
+                      <TextBlock Text="● 等待 USB"
+                                 Foreground="{DynamicResource MptBrushDanger}"
+                                 IsVisible="{Binding HasError}" />
+                      <TextBlock Text="○ 已停用"
+                                 Foreground="{DynamicResource MptBrushTextMuted}"
+                                 IsVisible="{Binding IsDisabled}" />
+                    </Grid>
+                    <TextBlock Grid.Column="4"
+                               Text="{Binding LastAction}"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Border Classes="MptEmptyState"
+                    Margin="12"
+                    IsVisible="{Binding !HasConfiguredWifiDevices}">
+              <TextBlock Text="没有配置 Wi-Fi ADB 设备" HorizontalAlignment="Center" />
+            </Border>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </StackPanel>
+
+    <StackPanel IsVisible="{Binding !IsForward}"
+                Spacing="{DynamicResource MptSpacingL}"
+                MaxWidth="1480"
+                HorizontalAlignment="Stretch">
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource MptSpacingM}">
+      <StackPanel Spacing="2" VerticalAlignment="Center">
+        <TextBlock Classes="MptPageTitle" Text="ADB Forwarder" />
+        <TextBlock Classes="MptPageSubtitle" Text="设置与诊断" />
+      </StackPanel>
+      <StackPanel Grid.Column="1"
+                  Orientation="Horizontal"
+                  Spacing="{DynamicResource MptSpacingS}"
+                  VerticalAlignment="Center">
+        <controls:MptButton Content="返回设备状态" Command="{Binding ShowForwardCommand}" />
+        <controls:MptButton Content="设置"
+                            Command="{Binding ShowSettingsCommand}"
+                            Classes.MptPrimaryButton="{Binding IsSettings}" />
+        <controls:MptButton Content="诊断"
+                            Command="{Binding ShowDiagnosticsCommand}"
+                            Classes.MptPrimaryButton="{Binding IsDiagnostics}" />
+        <controls:MptButton Content="刷新" Command="{Binding RefreshCommand}" />
+      </StackPanel>
+    </Grid>
+
+    <StackPanel IsVisible="False"
+                Spacing="{DynamicResource MptSpacingL}">
+      <Border Classes="MptInset" IsVisible="{Binding HasConfigurationError}">
+        <StackPanel Spacing="4">
+          <TextBlock Text="设备配置读取失败" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding ConfigurationError}" Classes="MptMeta" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding ConfigurationPath}" Classes="MptMono" TextWrapping="Wrap" />
         </StackPanel>
-        <TextBlock Grid.Column="1" Text="{Binding WakeupPadSummary}" Classes="MptMeta"
-                   VerticalAlignment="Center" />
-      </Grid>
-
-      <Grid ColumnDefinitions="*,*"
-            ColumnSpacing="{DynamicResource MptSpacingM}">
-        <Button Classes="forward-mode"
-                Classes.selected="{Binding IsWiredForward}"
-                Command="{Binding SelectWiredForwardCommand}"
-                AutomationProperties.Name="选择有线设备转发">
-          <Grid ColumnDefinitions="Auto,*"
-                ColumnSpacing="12">
-            <TextBlock Text="&#xE88E;"
-                       FontFamily="{DynamicResource MptFontFamilyIcons}"
-                       FontSize="24"
-                       Foreground="{DynamicResource MptBrushAccent}"
-                       VerticalAlignment="Center" />
-            <StackPanel Grid.Column="1" Spacing="3">
-              <TextBlock Text="有线设备转发"
-                         FontWeight="SemiBold"
-                         FontSize="{DynamicResource MptFontSizeCardTitle}" />
-              <TextBlock Text="USB ADB → 配置设备 TCP → 主机转发 → Windows 共享端口"
-                         Classes="MptMeta"
-                         TextWrapping="Wrap" />
-              <TextBlock Text="{Binding WiredDeviceCount, StringFormat='检测到 {0} 台有线设备'}"
-                         Classes="MptMeta" />
-            </StackPanel>
-          </Grid>
-        </Button>
-
-        <Button Grid.Column="1"
-                Classes="forward-mode"
-                Classes.selected="{Binding IsWirelessForward}"
-                Command="{Binding SelectWirelessForwardCommand}"
-                AutomationProperties.Name="选择无线设备转发">
-          <Grid ColumnDefinitions="Auto,*"
-                ColumnSpacing="12">
-            <TextBlock Text="&#xE701;"
-                       FontFamily="{DynamicResource MptFontFamilyIcons}"
-                       FontSize="24"
-                       Foreground="{DynamicResource MptBrushAccent}"
-                       VerticalAlignment="Center" />
-            <StackPanel Grid.Column="1" Spacing="3">
-              <TextBlock Text="无线设备转发"
-                         FontWeight="SemiBold"
-                         FontSize="{DynamicResource MptFontSizeCardTitle}" />
-              <TextBlock Text="已连接 host:port → 主机转发 → Windows 共享端口；保留设备网络配置"
-                         Classes="MptMeta"
-                         TextWrapping="Wrap" />
-              <TextBlock Text="{Binding WirelessDeviceCount, StringFormat='检测到 {0} 台无线设备'}"
-                         Classes="MptMeta" />
-            </StackPanel>
-          </Grid>
-        </Button>
-      </Grid>
-
-      <Border CornerRadius="12"
-              Padding="{DynamicResource MptCardPadding}"
-              Background="{DynamicResource MptBrushAccent}">
-        <Grid ColumnDefinitions="*,Auto"
-              ColumnSpacing="18">
-          <StackPanel Spacing="{DynamicResource MptSpacingS}">
-            <TextBlock Text="{Binding ForwardWorkflowTitle}"
-                       Classes="MptSectionTitle"
-                       Foreground="{DynamicResource MptBrushAccentText}" />
-            <TextBlock Text="{Binding ForwardWorkflowDescription}"
-                       Foreground="{DynamicResource MptBrushAccentText}"
-                       Opacity="0.86"
-                       TextWrapping="Wrap" />
-          </StackPanel>
-          <StackPanel Grid.Column="1"
-                      Spacing="{DynamicResource MptSpacingXs}"
-                      HorizontalAlignment="Right"
-                      VerticalAlignment="Center">
-            <TextBlock Text="{Binding ForwardModeLabel}"
-                       Classes="MptCardTitle"
-                       Foreground="{DynamicResource MptBrushAccentText}"
-                       HorizontalAlignment="Right" />
-            <TextBlock Text="{Binding ForwardEndpointSummary}"
-                       Classes="MptMono"
-                       Foreground="{DynamicResource MptBrushAccentText}"
-                       Opacity="0.82" />
-            <TextBlock Text="{Binding ForwardPathSummary}"
-                       Classes="MptMeta"
-                       Foreground="{DynamicResource MptBrushAccentText}"
-                       Opacity="0.82"
-                       HorizontalAlignment="Right" />
-          </StackPanel>
-        </Grid>
       </Border>
 
       <Grid x:Name="ForwardWorkspaceGrid"
-            ColumnDefinitions="0.88*,1.12*"
+            ColumnDefinitions="*"
             ColumnSpacing="{DynamicResource MptSpacingL}">
         <StackPanel x:Name="ForwardSetupColumn"
                     Spacing="{DynamicResource MptSpacingL}">
           <Border Classes="MptCard">
             <StackPanel Spacing="{DynamicResource MptSpacingL}">
-              <StackPanel Spacing="{DynamicResource MptSpacingXs}">
-                <TextBlock Classes="MptSectionTitle" Text="1. 选择设备与端口" />
-                <TextBlock Classes="MptPageSubtitle"
-                           Text="设备列表直接来自 adb devices -l；所有检查与执行都锁定到所选序列号。"
-                           TextWrapping="Wrap" />
-              </StackPanel>
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <StackPanel Spacing="{DynamicResource MptSpacingXs}">
+                  <TextBlock Classes="MptSectionTitle" Text="选择要共享的设备" />
+                  <TextBlock Classes="MptPageSubtitle"
+                             Text="设备连接并完成 USB 调试授权后，会显示在这里。"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+                <Border Grid.Column="1"
+                        Classes="MptStatusBadge"
+                        Classes.running="{Binding ForwardIsReady}"
+                        Classes.degraded="{Binding IsForwardBusy}"
+                        Classes.error="{Binding ForwardNeedsAttention}"
+                        VerticalAlignment="Center">
+                  <TextBlock Text="{Binding ForwardStatusLabel}" Classes="MptMeta" />
+                </Border>
+              </Grid>
+
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource MptSpacingM}">
+                <Button Classes="connection-mode"
+                        Classes.selected="{Binding IsWiredForward}"
+                        Command="{Binding SelectWiredForwardCommand}"
+                        AutomationProperties.Name="使用 USB 连接">
+                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <TextBlock Text="&#xE88E;"
+                               FontFamily="{DynamicResource MptFontFamilyIcons}"
+                               FontSize="22"
+                               Foreground="{DynamicResource MptBrushAccent}"
+                               VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Spacing="2">
+                      <TextBlock Text="USB 连接" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding WiredDeviceCount, StringFormat='检测到 {0} 台'}"
+                                 Classes="MptMeta" />
+                    </StackPanel>
+                  </Grid>
+                </Button>
+                <Button Grid.Column="1"
+                        Classes="connection-mode"
+                        Classes.selected="{Binding IsWirelessForward}"
+                        Command="{Binding SelectWirelessForwardCommand}"
+                        AutomationProperties.Name="使用无线 ADB 连接">
+                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <TextBlock Text="&#xE701;"
+                               FontFamily="{DynamicResource MptFontFamilyIcons}"
+                               FontSize="22"
+                               Foreground="{DynamicResource MptBrushAccent}"
+                               VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Spacing="2">
+                      <TextBlock Text="无线 ADB" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding WirelessDeviceCount, StringFormat='检测到 {0} 台'}"
+                                 Classes="MptMeta" />
+                    </StackPanel>
+                  </Grid>
+                </Button>
+              </Grid>
 
               <StackPanel Spacing="{DynamicResource MptSpacingS}">
                 <TextBlock Text="ADB 设备" Classes="MptMeta" />
                 <controls:MptComboBox ItemsSource="{Binding ForwardDevices}"
                                       SelectedItem="{Binding SelectedForwardDevice, Mode=TwoWay}"
                                       MinHeight="38"
+                                      MaxDropDownHeight="360"
                                       HorizontalAlignment="Stretch">
                   <controls:MptComboBox.ItemTemplate>
                     <DataTemplate x:DataType="services:AdbForwarderDevice">
-                      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource MptSpacingM}">
-                        <StackPanel Spacing="{DynamicResource MptSpacingXs}">
-                          <TextBlock Text="{Binding Model}" FontWeight="SemiBold" />
-                          <TextBlock Text="{Binding DisplayId}" Classes="MptMono" />
+                      <Grid ColumnDefinitions="*,Auto"
+                            ColumnSpacing="{DynamicResource MptSpacingM}"
+                            MinHeight="52"
+                            Margin="4,2">
+                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
+                          <TextBlock Text="{Binding IdentityLabel}"
+                                     Classes="MptMono"
+                                     TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                         <TextBlock Grid.Column="1"
-                                   Text="{Binding State}"
+                                   Text="{Binding StateLabel}"
                                    Classes="MptMeta"
                                    VerticalAlignment="Center" />
                       </Grid>
@@ -383,31 +339,32 @@
                            TextWrapping="Wrap" />
               </StackPanel>
 
-              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{DynamicResource MptSpacingM}">
-                <StackPanel Spacing="{DynamicResource MptSpacingS}">
-                  <TextBlock Text="本机端口" Classes="MptMeta" />
-                  <NumericUpDown Value="{Binding LocalForwardPort, Mode=TwoWay}"
-                                 Minimum="1" Maximum="65535" FormatString="0" />
-                </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="{DynamicResource MptSpacingS}">
-                  <TextBlock Text="共享端口" Classes="MptMeta" />
-                  <NumericUpDown Value="{Binding SharedPort, Mode=TwoWay}"
-                                 Minimum="1" Maximum="65535" FormatString="0" />
-                </StackPanel>
-                <StackPanel Grid.Column="2" Spacing="{DynamicResource MptSpacingS}">
-                  <TextBlock Text="设备端口" Classes="MptMeta" />
-                  <NumericUpDown Value="{Binding DevicePort, Mode=TwoWay}"
-                                 Minimum="1" Maximum="65535" FormatString="0" />
-                </StackPanel>
-              </Grid>
+              <Expander Header="高级端口设置">
+                <Grid ColumnDefinitions="*,*,*"
+                      ColumnSpacing="{DynamicResource MptSpacingM}"
+                      Margin="0,12,0,0">
+                  <StackPanel Spacing="{DynamicResource MptSpacingS}">
+                    <TextBlock Text="内部转发端口" Classes="MptMeta" />
+                    <NumericUpDown Value="{Binding LocalForwardPort, Mode=TwoWay}"
+                                   Minimum="1" Maximum="65535" FormatString="0" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="{DynamicResource MptSpacingS}">
+                    <TextBlock Text="局域网共享端口" Classes="MptMeta" />
+                    <NumericUpDown Value="{Binding SharedPort, Mode=TwoWay}"
+                                   Minimum="1" Maximum="65535" FormatString="0" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="{DynamicResource MptSpacingS}">
+                    <TextBlock Text="Android ADB 端口" Classes="MptMeta" />
+                    <NumericUpDown Value="{Binding DevicePort, Mode=TwoWay}"
+                                   Minimum="1" Maximum="65535" FormatString="0" />
+                  </StackPanel>
+                </Grid>
+              </Expander>
 
-              <Border Classes="MptInset">
-                <StackPanel Spacing="{DynamicResource MptSpacingM}">
-                  <controls:MptCheckBox Content="同时连接远端 AOSP 主机"
+              <Expander Header="远端 AOSP 主机">
+                <StackPanel Spacing="{DynamicResource MptSpacingM}" Margin="0,12,0,0">
+                  <controls:MptCheckBox Content="同时共享给远端主机"
                                         IsChecked="{Binding IncludeSsh, Mode=TwoWay}" />
-                  <TextBlock Text="默认关闭。开启后会建立 SSH 反向隧道，并在远端执行 adb kill-server、connect 与 remount。"
-                             Classes="MptMeta"
-                             TextWrapping="Wrap" />
                   <Grid IsVisible="{Binding IncludeSsh}"
                         RowDefinitions="Auto,Auto"
                         ColumnDefinitions="130,*"
@@ -423,7 +380,7 @@
                                          PlaceholderText="/android/aosp/out/soong/host/linux-x86/bin/adb" />
                   </Grid>
                 </StackPanel>
-              </Border>
+              </Expander>
 
               <Border Classes="MptInset"
                       IsVisible="{Binding !BrokerAvailable}">
@@ -437,38 +394,53 @@
               </Border>
 
               <WrapPanel Orientation="Horizontal">
-                <controls:MptButton Content="运行只读预检"
-                                    Margin="{DynamicResource MptWrapItemMargin}"
-                                    Command="{Binding PreflightForwardCommand}" />
                 <controls:MptButton Classes="MptPrimaryButton"
-                                    Content="开始转发"
+                                    Content="开始共享"
                                     Margin="{DynamicResource MptWrapItemMargin}"
                                     Command="{Binding StartForwardCommand}" />
+                <controls:MptButton Content="检查连接"
+                                    Margin="{DynamicResource MptWrapItemMargin}"
+                                    Command="{Binding PreflightForwardCommand}" />
                 <controls:MptButton Content="取消"
+                                    IsVisible="{Binding IsForwardBusy}"
                                     Margin="{DynamicResource MptWrapItemMargin}"
                                     Command="{Binding CancelForwardCommand}" />
                 <controls:MptButton Content="{Binding RetryForwardLabel}"
+                                    IsVisible="{Binding CanRetryForward}"
                                     Margin="{DynamicResource MptWrapItemMargin}"
                                     Command="{Binding RetryForwardCommand}" />
                 <controls:MptButton Content="清理资源"
+                                    IsVisible="{Binding CanCleanupForward}"
                                     Margin="{DynamicResource MptGapBottomS}"
                                     Command="{Binding CleanupForwardCommand}" />
               </WrapPanel>
 
               <Border Classes="MptInset">
-                <StackPanel Spacing="{DynamicResource MptSpacingXs}">
-                  <TextBlock Text="{Binding ForwardActionMessage}"
-                             FontWeight="SemiBold"
-                             TextWrapping="Wrap" />
-                  <TextBlock Text="{Binding PreflightSummary}"
-                             Classes="MptMeta"
-                             TextWrapping="Wrap" />
-                </StackPanel>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
+                  <StackPanel Spacing="{DynamicResource MptSpacingXs}">
+                    <TextBlock Text="{Binding ForwardActionMessage}"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding ForwardConnectionHint}"
+                               Classes="MptMeta"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="1"
+                              IsVisible="{Binding ForwardIsReady}"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Center">
+                    <TextBlock Text="在另一台电脑运行" Classes="MptMeta" HorizontalAlignment="Right" />
+                    <SelectableTextBlock Text="{Binding ForwardConnectCommand}"
+                                         Classes="MptMono"
+                                         FontWeight="SemiBold"
+                                         HorizontalAlignment="Right" />
+                  </StackPanel>
+                </Grid>
               </Border>
             </StackPanel>
           </Border>
 
-          <Border Classes="MptCard">
+          <Border Classes="MptCard" IsVisible="{Binding HasPreflightChecks}">
             <StackPanel Spacing="{DynamicResource MptSpacingM}">
               <TextBlock Classes="MptSectionTitle" Text="预检结果" />
               <ItemsControl ItemsSource="{Binding PreflightChecks}">
@@ -508,15 +480,16 @@
         </StackPanel>
 
         <StackPanel x:Name="ForwardProgressColumn"
-                    Grid.Column="1"
+                     Grid.Column="1"
+                    IsVisible="{Binding HasForwardRun}"
                     Spacing="{DynamicResource MptSpacingL}">
           <Border Classes="MptCard">
             <StackPanel Spacing="{DynamicResource MptSpacingM}">
               <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Spacing="{DynamicResource MptSpacingXs}">
-                  <TextBlock Classes="MptSectionTitle" Text="2. 转发进度" />
+                  <TextBlock Classes="MptSectionTitle" Text="执行详情" />
                   <TextBlock Classes="MptPageSubtitle"
-                             Text="每个阶段都有独立状态；失败后可以清理已经获得的资源。" />
+                             Text="这里显示检查、授权和连接结果。" />
                 </StackPanel>
                 <ProgressBar Grid.Column="1"
                              Width="110"
@@ -560,10 +533,10 @@
             </StackPanel>
           </Border>
 
-          <Border Classes="MptCard">
+          <Border Classes="MptCard" IsVisible="{Binding HasForwardLogs}">
             <StackPanel Spacing="{DynamicResource MptSpacingM}">
               <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Classes="MptSectionTitle" Text="实时日志" />
+                <TextBlock Classes="MptSectionTitle" Text="操作记录" />
                 <TextBlock Grid.Column="1" Classes="MptMeta" Text="最多保留 200 条" />
               </Grid>
               <Border Classes="MptInset" MinHeight="150" MaxHeight="300">
@@ -585,9 +558,6 @@
                   </ItemsControl>
                 </ScrollViewer>
               </Border>
-              <TextBlock Text="开始转发后，这里会显示每次检查、连接、重试和清理。"
-                         IsVisible="{Binding !HasForwardLogs}"
-                         Classes="MptPageSubtitle" />
             </StackPanel>
           </Border>
         </StackPanel>
@@ -1066,5 +1036,6 @@
         </StackPanel>
       </Border>
     </StackPanel>
-  </StackPanel>
+    </StackPanel>
+  </Grid>
 </UserControl>

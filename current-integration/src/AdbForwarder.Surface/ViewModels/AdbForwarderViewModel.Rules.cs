@@ -212,6 +212,6 @@ public sealed partial class AdbForwarderViewModel
 
     private static string NormalizeRoute(string routeId)
     {
-        return routeId is "forward" or "rules" or "devices" or "activity" or "diagnostics" or "settings" ? routeId : "forward";
+        return routeId is "settings" or "diagnostics" ? routeId : "forward";
     }
 }

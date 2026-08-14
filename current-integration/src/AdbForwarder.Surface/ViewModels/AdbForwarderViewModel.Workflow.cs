@@ -27,7 +27,7 @@ public sealed partial class AdbForwarderViewModel
         ResetForwardSteps();
         ForwardActionMessage = SelectedForwardDevice is null
             ? $"当前没有已连接的{(mode == AdbForwardConnectionMode.Wired ? "USB 有线" : "Wi-Fi 无线")} ADB 设备。"
-            : $"已选择{(mode == AdbForwardConnectionMode.Wired ? "有线" : "无线")}工作流，请先运行只读预检。";
+            : $"已切换到{(mode == AdbForwardConnectionMode.Wired ? "USB" : "无线 ADB")}设备，可以开始共享。";
         NotifyForwardState();
         return Task.CompletedTask;
     }
@@ -72,6 +72,9 @@ public sealed partial class AdbForwarderViewModel
 
         _forwardCancellation?.Dispose();
         _forwardCancellation = new CancellationTokenSource();
+        _forwardHasRun = true;
+        _forwardSucceeded = false;
+        _forwardCleaned = false;
         IsForwardBusy = true;
         _canRetryForward = false;
         _approvalRequired = false;
@@ -92,6 +95,7 @@ public sealed partial class AdbForwarderViewModel
                 OnForwardEventAsync,
                 _forwardCancellation.Token).ConfigureAwait(true);
             _cleanupState = result.CleanupState;
+            _forwardSucceeded = result.Success;
             _canRetryForward = !result.Success;
             _approvalRequired = result.ApprovalRequired;
             _forwarding.PersistSession(BuildForwardRequest(), _cleanupState, _approvalRequired);
@@ -104,6 +108,7 @@ public sealed partial class AdbForwarderViewModel
         }
         catch (Exception ex)
         {
+            _forwardSucceeded = false;
             _canRetryForward = true;
             _approvalRequired = false;
             TechnicalDetails = $"ADB 转发工作流失败：{ex.GetType().Name}\n{ex.Message}";
@@ -132,6 +137,7 @@ public sealed partial class AdbForwarderViewModel
         _forwardCancellation?.Dispose();
         _forwardCancellation = new CancellationTokenSource();
         IsForwardBusy = true;
+        _forwardHasRun = true;
         ForwardActionMessage = "正在清理本次工作流创建的资源…";
         ForwardSteps.Clear();
         try
@@ -143,6 +149,8 @@ public sealed partial class AdbForwarderViewModel
                 OnForwardEventAsync,
                 _forwardCancellation.Token).ConfigureAwait(true);
             _cleanupState = result.CleanupState;
+            _forwardSucceeded = false;
+            _forwardCleaned = result.Success;
             _canRetryForward = !result.Success;
             _approvalRequired = result.ApprovalRequired;
             _forwarding.PersistSession(BuildForwardRequest(), _cleanupState, _approvalRequired);
@@ -153,6 +161,7 @@ public sealed partial class AdbForwarderViewModel
         }
         catch (Exception ex)
         {
+            _forwardSucceeded = false;
             _canRetryForward = true;
             _approvalRequired = false;
             TechnicalDetails = $"ADB 转发清理失败：{ex.GetType().Name}\n{ex.Message}";
@@ -246,8 +255,8 @@ public sealed partial class AdbForwarderViewModel
         OnPropertyChanged(nameof(HasPreflightChecks));
         OnPropertyChanged(nameof(PreflightSummary));
         OnPropertyChanged(nameof(PreflightCanRun));
-        OnPropertyChanged(nameof(ForwardEndpointSummary));
-        ForwardActionMessage = "配置已修改，请重新运行只读预检。";
+        OnPropertyChanged(nameof(ForwardConnectCommand));
+        ForwardActionMessage = "配置已更新。开始共享时会自动检查设备和端口。";
         NotifyForwardState();
     }
 
@@ -258,6 +267,10 @@ public sealed partial class AdbForwarderViewModel
         OnPropertyChanged(nameof(CanRetryForward));
         OnPropertyChanged(nameof(CanCleanupForward));
         OnPropertyChanged(nameof(RetryForwardLabel));
+        OnPropertyChanged(nameof(HasForwardRun));
+        OnPropertyChanged(nameof(ForwardIsReady));
+        OnPropertyChanged(nameof(ForwardNeedsAttention));
+        OnPropertyChanged(nameof(ForwardStatusLabel));
         ((MptAsyncRelayCommand)PreflightForwardCommand).NotifyCanExecuteChanged();
         ((MptAsyncRelayCommand)StartForwardCommand).NotifyCanExecuteChanged();
         ((MptAsyncRelayCommand)RetryForwardCommand).NotifyCanExecuteChanged();

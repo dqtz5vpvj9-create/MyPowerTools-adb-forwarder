@@ -27,11 +27,6 @@ public sealed partial class AdbForwarderViewModel
     public bool HasConfigurationError => Snapshot.ConfiguredState.Error.Length > 0;
     public string ConfigurationError => Snapshot.ConfiguredState.Error;
     public string ConfigurationPath => Snapshot.ConfiguredState.ConfigPath;
-    public string WakeupPadSummary => string.IsNullOrWhiteSpace(Snapshot.ConfiguredState.WakeupPadDeviceId)
-        ? "WakeupPad 未配置"
-        : $"WakeupPad · {Snapshot.ConfiguredState.WakeupPadDeviceId}";
-    public string ForwardFleetSummary => $"{ConfiguredForwardDevices.Count} 台已配置 · {ConfiguredForwardDevices.Count(device => device.IsOnline)} 台在线";
-    public string WifiFleetSummary => $"{ConfiguredWifiDevices.Count} 台已配置 · {ConfiguredWifiDevices.Count(device => device.IsHealthy)} 台可连接";
     public bool HasServiceStatus => Snapshot.ServiceStatus is not null;
     public bool ServiceIsActive => Snapshot.ServiceStatus?.IsActive == true;
     public bool ServiceNeedsAttention => Snapshot.ServiceStatus is not null && !Snapshot.ServiceStatus.IsActive;
@@ -78,7 +73,7 @@ public sealed partial class AdbForwarderViewModel
                 PreflightChecks.Clear();
                 ForwardActionMessage = value is null
                     ? "请先连接并选择一台 ADB 设备。"
-                    : $"已选择 {value.Model}，建议先运行只读预检。";
+                    : $"已选择 {value.DisplayName}，可以开始共享。";
                 NotifyForwardState();
             }
         }
@@ -91,7 +86,6 @@ public sealed partial class AdbForwarderViewModel
         {
             if (SetProperty(ref _localForwardPort, value))
             {
-                OnPropertyChanged(nameof(ForwardPathSummary));
                 InvalidateForwardPreflight();
             }
         }
@@ -104,7 +98,7 @@ public sealed partial class AdbForwarderViewModel
         {
             if (SetProperty(ref _sharedPort, value))
             {
-                OnPropertyChanged(nameof(ForwardPathSummary));
+                OnPropertyChanged(nameof(ForwardConnectCommand));
                 InvalidateForwardPreflight();
             }
         }
@@ -117,7 +111,6 @@ public sealed partial class AdbForwarderViewModel
         {
             if (SetProperty(ref _devicePort, value))
             {
-                OnPropertyChanged(nameof(ForwardPathSummary));
                 InvalidateForwardPreflight();
             }
         }
@@ -134,10 +127,6 @@ public sealed partial class AdbForwarderViewModel
                 OnPropertyChanged(nameof(IsWirelessForward));
                 OnPropertyChanged(nameof(ForwardDevices));
                 OnPropertyChanged(nameof(HasForwardDevices));
-                OnPropertyChanged(nameof(ForwardModeLabel));
-                OnPropertyChanged(nameof(ForwardWorkflowTitle));
-                OnPropertyChanged(nameof(ForwardWorkflowDescription));
-                OnPropertyChanged(nameof(ForwardPathSummary));
             }
         }
     }
@@ -152,8 +141,8 @@ public sealed partial class AdbForwarderViewModel
         {
             if (SetProperty(ref _includeSsh, value))
             {
-                OnPropertyChanged(nameof(ForwardModeLabel));
                 OnPropertyChanged(nameof(IsLocalOnly));
+                OnPropertyChanged(nameof(ForwardConnectionHint));
                 InvalidateForwardPreflight();
             }
         }
@@ -168,7 +157,7 @@ public sealed partial class AdbForwarderViewModel
         {
             if (SetProperty(ref _remoteHost, value))
             {
-                OnPropertyChanged(nameof(ForwardModeLabel));
+                OnPropertyChanged(nameof(ForwardConnectionHint));
                 InvalidateForwardPreflight();
             }
         }
@@ -194,6 +183,10 @@ public sealed partial class AdbForwarderViewModel
             if (SetProperty(ref _isForwardBusy, value))
             {
                 NotifyForwardState();
+                OnPropertyChanged(nameof(HasForwardRun));
+                OnPropertyChanged(nameof(ForwardIsReady));
+                OnPropertyChanged(nameof(ForwardNeedsAttention));
+                OnPropertyChanged(nameof(ForwardStatusLabel));
                 OnPropertyChanged(nameof(CanPreview));
                 OnPropertyChanged(nameof(CanSaveMappings));
                 OnPropertyChanged(nameof(CanApply));
@@ -224,25 +217,33 @@ public sealed partial class AdbForwarderViewModel
     public string RuleCountText => CurrentRules.Count == 1 ? "1 条生效规则" : $"{CurrentRules.Count} 条生效规则";
     public string AdbStateLabel => Snapshot.AdbAvailable ? "ADB 已就绪" : "ADB 当前不可用";
     public string PortProxyStateLabel => Snapshot.PortProxyAvailable ? "Windows 转发已就绪" : "Windows 转发不可用";
-    public string ForwardModeLabel => $"{(IsWiredForward ? "有线设备" : "无线设备")} · {(IncludeSsh ? $"本机 + {RemoteHost} 远端" : "仅本机")}";
-    public string ForwardWorkflowTitle => IsWiredForward ? "有线设备转发" : "无线设备转发";
-    public string ForwardWorkflowDescription => IsWiredForward
-        ? "选择 USB ADB 设备，配置设备 TCP 后通过主机端口向本机与可选远端提供连接。"
-        : "选择已经连接的 host:port 网络 ADB 设备，保持设备网络配置并建立主机与可选远端转发。";
-    public string ForwardPathSummary => IsWiredForward
-        ? $"USB 设备 → 共享端口 {SharedPort}"
-        : $"Wi-Fi 设备 → 共享端口 {SharedPort}";
-    public string ForwardEndpointSummary => $"共享端口 {SharedPort} · Android ADB 端口 {DevicePort}";
+    public string ForwardConnectCommand => $"adb connect <这台电脑的 IP>:{SharedPort}";
+    public string ForwardConnectionHint => IncludeSsh
+        ? $"本机和 {RemoteHost} 都可通过共享端口连接。"
+        : "共享成功后，同一网络中的电脑可通过显示的地址连接。";
     public string PreflightSummary => _preflight?.Summary ?? "尚未运行预检";
     public bool PreflightCanRun => _preflight?.CanRun ?? false;
     public bool CanPreflightForward => !IsForwardBusy && SelectedForwardDevice is not null;
     public bool CanStartForward => !IsForwardBusy &&
                                    !CanCleanupForward &&
-                                   SelectedForwardDevice is not null &&
-                                   PreflightCanRun;
+                                   SelectedForwardDevice is not null;
     public bool CanRetryForward => !IsForwardBusy && _canRetryForward && SelectedForwardDevice is not null;
     public string RetryForwardLabel => _approvalRequired ? "批准并继续" : "继续重试";
     public bool CanCleanupForward => !IsForwardBusy && _cleanupState.HasWork;
+    public bool HasForwardRun => _forwardHasRun || HasForwardLogs || CanRetryForward || CanCleanupForward;
+    public bool ForwardIsReady => _forwardSucceeded && !IsForwardBusy;
+    public bool ForwardNeedsAttention => _forwardHasRun && !_forwardSucceeded && !_forwardCleaned && !IsForwardBusy;
+    public string ForwardStatusLabel => IsForwardBusy
+        ? "正在设置"
+        : _approvalRequired
+            ? "等待管理员确认"
+            : _forwardSucceeded
+                ? "共享已就绪"
+                : _forwardCleaned
+                    ? "共享已停止"
+                    : _forwardHasRun
+                        ? "需要处理"
+                        : "准备就绪";
     public string PlanSummary => !IsPreviewCurrent
         ? "配置已修改，请重新预览"
         : IsMappingsDirty && Plan.HasChanges

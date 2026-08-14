@@ -40,66 +40,42 @@ public sealed class AdbForwarderToolService
             _forwarding = new AdbForwardingWorkflowService(adbPath: _workflowAdbPath);
         }
 
-        var diagnosticsTask = _commands.ExecuteAsync("adb-forwarder.diagnostics.summary", cancellationToken: cancellationToken);
-        var planTask = _commands.ExecuteAsync("adb-forwarder.portproxy.plan", cancellationToken: cancellationToken);
-        var logsTask = client.TailLogsAsync(ModuleId, cancellationToken);
         var serviceStateTask = LoadServiceStateAsync(refreshService, cancellationToken);
-        var workflowDevicesTask = _service is null
-            ? _forwarding.ScanDevicesAsync(cancellationToken)
-            : Task.FromResult<IReadOnlyList<AdbForwarderDevice>>([]);
-        await Task.WhenAll(diagnosticsTask, planTask, logsTask, serviceStateTask, workflowDevicesTask).ConfigureAwait(false);
+        await serviceStateTask.ConfigureAwait(false);
 
-        var diagnostics = ParseObject(diagnosticsTask.Result.Response.Summary);
-        var planRoot = ParseObject(planTask.Result.Response.Summary);
         var moduleSettings = settingsJson;
-
-        var adbVersion = diagnostics["adbVersion"] as JsonObject;
-        var devicesResult = diagnostics["devices"] as JsonObject;
-        var portProxyResult = diagnostics["portproxy"] as JsonObject;
-        var plan = ParsePlan(planRoot["plan"] as JsonObject);
         var serviceState = serviceStateTask.Result;
         var workflowDevices = serviceState is null
-            ? workflowDevicesTask.Result
-            : serviceState.ForwardDevices.Select(device => new AdbForwarderDevice(
-                device.DeviceId,
-                device.Status switch
-                {
-                    "online" => "device",
-                    "offline" => "offline",
-                    _ => "disconnected"
-                },
-                "Configured USB device",
-                "",
-                "")).ToArray();
-        var logs = logsTask.Result
-            .OrderByDescending(entry => entry.Time?.ToDateTimeOffset() ?? DateTimeOffset.MinValue)
-            .Take(40)
-            .Select(entry => new AdbForwarderActivity(
-                entry.Time?.ToDateTimeOffset() ?? DateTimeOffset.MinValue,
-                entry.Level,
-                RedactKnownDeviceIds(entry.Message, workflowDevices)))
-            .ToArray();
-        var redactedDevices = ParseDevices(ReadString(devicesResult, "stdout"));
-        var safeWorkflowDevices = ApplyModuleRedaction(workflowDevices, redactedDevices);
+            ? await ScanWorkflowDevicesAsync(cancellationToken).ConfigureAwait(false)
+            : BuildServiceDevices(serviceState);
+        var currentRules = serviceState?.PortProxyRules
+            .Select(rule => new AdbForwarderRule(
+                rule.ListenAddress,
+                rule.ListenPort,
+                rule.ConnectAddress,
+                rule.ConnectPort))
+            .ToArray() ?? [];
         var configuredState = serviceState is null
             ? await _configuration.LoadAsync(
                 workflowDevices,
-                ParseRules(portProxyResult?["rules"] as JsonArray),
+                currentRules,
                 cancellationToken).ConfigureAwait(false)
             : BuildConfiguredState(serviceState);
+        var adbAvailable = serviceState is not null &&
+                           !string.Equals(serviceState.Health, "degraded", StringComparison.OrdinalIgnoreCase);
 
         return new AdbForwarderSnapshot(
-            ReadBool(adbVersion, "available"),
-            FirstLine(ReadString(adbVersion, "stdout")),
-            redactedDevices,
-            ReadBool(portProxyResult, "available"),
-            ParseRules(portProxyResult?["rules"] as JsonArray),
+            adbAvailable,
+            serviceState?.AdbPath ?? _workflowAdbPath,
+            workflowDevices,
+            serviceState is not null,
+            currentRules,
             ParseMappings(moduleSettings["mappings"] as JsonArray),
-            plan,
-            logs,
+            new AdbForwarderPlan(currentRules, [], [], [], false),
+            [],
             settings.Revision)
         {
-            ForwardDevices = safeWorkflowDevices,
+            ForwardDevices = workflowDevices,
             AdbPath = _workflowAdbPath,
             PersistedWorkflow = _forwarding.LoadPersistedState(),
             ConfiguredState = configuredState,
@@ -111,6 +87,31 @@ public sealed class AdbForwarderToolService
                     serviceState.Summary,
                     serviceState.UpdatedAt)
         };
+    }
+
+    private static IReadOnlyList<AdbForwarderDevice> BuildServiceDevices(
+        AdbForwarderServiceSnapshot state)
+    {
+        var devices = state.ForwardDevices.Select(device => new AdbForwarderDevice(
+            device.DeviceId,
+            device.Status switch
+            {
+                "online" => "device",
+                "offline" => "offline",
+                _ => "disconnected"
+            },
+            "USB ADB 设备",
+            "",
+            ""));
+        var wifi = state.WifiDevices.Select(device => new AdbForwarderDevice(
+            $"{device.Host}:{device.Port}",
+            string.Equals(device.Status, "reachable", StringComparison.OrdinalIgnoreCase)
+                ? "device"
+                : "offline",
+            device.Name,
+            "",
+            ""));
+        return devices.Concat(wifi).ToArray();
     }
 
     private async Task<AdbForwarderServiceSnapshot?> LoadServiceStateAsync(
@@ -129,6 +130,47 @@ public sealed class AdbForwarderToolService
         }
     }
 
+    private async Task<IReadOnlyList<AdbForwarderDevice>> ScanWorkflowDevicesAsync(
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _forwarding.ScanDevicesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is IOException or InvalidOperationException or TimeoutException)
+        {
+            return [];
+        }
+    }
+
+    private static IReadOnlyList<AdbForwarderDevice> MergeServiceAndDiagnosticDevices(
+        IReadOnlyList<AdbForwarderServiceDevice> serviceDevices,
+        IReadOnlyList<AdbForwarderDevice> diagnosticDevices)
+    {
+        var devicesById = diagnosticDevices.ToDictionary(device => device.Id, StringComparer.Ordinal);
+        var merged = new List<AdbForwarderDevice>(diagnosticDevices);
+        foreach (var serviceDevice in serviceDevices)
+        {
+            if (devicesById.ContainsKey(serviceDevice.DeviceId))
+            {
+                continue;
+            }
+
+            merged.Add(new AdbForwarderDevice(
+                serviceDevice.DeviceId,
+                serviceDevice.Status switch
+                {
+                    "online" => "device",
+                    "offline" => "offline",
+                    _ => "disconnected"
+                },
+                "USB ADB 设备",
+                "",
+                ""));
+        }
+        return merged;
+    }
+
     private static AdbForwarderConfiguredState BuildConfiguredState(AdbForwarderServiceSnapshot state)
     {
         var forward = state.ForwardDevices.Select(device => new AdbConfiguredForwardDevice(
@@ -141,7 +183,7 @@ public sealed class AdbForwarderToolService
                 "offline" => AdbConfiguredDeviceState.Offline,
                 _ => AdbConfiguredDeviceState.Disconnected
             },
-            device.Status == "online" ? state.UpdatedAt : default,
+            device.LastSeenOnline,
             device.PortProxyReady,
             device.AdbForwardReady,
             device.LastAction)).ToArray();
@@ -367,6 +409,15 @@ public sealed class AdbForwarderToolService
             }
             result.Add(device with { SafeId = safeId });
         }
+        foreach (var device in available)
+        {
+            result.Add(device with
+            {
+                SafeId = AdbForwardingWorkflowService.IsNetworkSerial(device.Id)
+                    ? device.Id
+                    : device.DisplayId
+            });
+        }
         return result;
     }
 
@@ -483,11 +534,24 @@ public sealed record AdbForwarderDevice(
     string TransportId,
     string SafeId = "")
 {
-    public string DisplayId => AdbForwardingWorkflowService.IsNetworkSerial(Id)
-        ? Id
-        : SafeId.StartsWith("<adb-device-", StringComparison.Ordinal)
-        ? SafeId
-        : AdbForwarderRedaction.DisplayDeviceId(Id);
+    public bool IsOnline => string.Equals(State, "device", StringComparison.OrdinalIgnoreCase);
+    public string DisplayName => string.IsNullOrWhiteSpace(Model) ||
+                                 string.Equals(Model, "Unknown device", StringComparison.OrdinalIgnoreCase) ||
+                                 string.Equals(Model, "Configured USB device", StringComparison.OrdinalIgnoreCase) ||
+                                 string.Equals(Model, "USB ADB 设备", StringComparison.OrdinalIgnoreCase)
+        ? AdbForwardingWorkflowService.IsNetworkSerial(Id) ? "无线 ADB 设备" : "USB ADB 设备"
+        : Model;
+    public string ConnectionLabel => AdbForwardingWorkflowService.IsNetworkSerial(Id) ? "无线 ADB" : "USB";
+    public string IdentityLabel => $"ADB serial · {Id}";
+    public string StateLabel => State.ToLowerInvariant() switch
+    {
+        "device" => "可用",
+        "unauthorized" => "等待授权",
+        "offline" => "离线",
+        "disconnected" => "未连接",
+        _ => State
+    };
+    public string DisplayId => Id;
 }
 
 internal static class AdbForwarderRedaction

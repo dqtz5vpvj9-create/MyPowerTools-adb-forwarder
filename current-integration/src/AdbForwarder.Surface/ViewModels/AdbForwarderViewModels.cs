@@ -30,6 +30,9 @@ public sealed partial class AdbForwarderViewModel : MyPowerTools.AvaloniaSdk.Too
     private bool _isForwardBusy;
     private bool _canRetryForward;
     private bool _approvalRequired;
+    private bool _forwardHasRun;
+    private bool _forwardSucceeded;
+    private bool _forwardCleaned;
     private int _localForwardPort = 15556;
     private int _sharedPort = 15557;
     private int _devicePort = 5555;
@@ -37,7 +40,7 @@ public sealed partial class AdbForwarderViewModel : MyPowerTools.AvaloniaSdk.Too
     private bool _includeSsh;
     private string _remoteHost = "r743";
     private string _remoteAdbPath = "/android/aosp/out/soong/host/linux-x86/bin/adb";
-    private string _forwardActionMessage = "选择一台已授权设备，然后运行预检。";
+    private string _forwardActionMessage = "选择一台已授权设备，然后开始共享。";
 
     public AdbForwarderViewModel(
         AdbForwarderSnapshot snapshot,
@@ -151,7 +154,12 @@ public sealed partial class AdbForwarderViewModel : MyPowerTools.AvaloniaSdk.Too
     /// <summary>Replaces the snapshot in place and fires a broad change notification for refresh.</summary>
     public void UpdateSnapshot(AdbForwarderSnapshot fresh)
     {
+        var selectedDeviceId = SelectedForwardDevice?.Id;
         Snapshot = fresh;
+        SelectedForwardDevice = DevicesForMode(ConnectionMode).FirstOrDefault(device =>
+                                    string.Equals(device.Id, selectedDeviceId, StringComparison.Ordinal))
+                                ?? DevicesForMode(ConnectionMode).FirstOrDefault(device => device.IsOnline)
+                                ?? DevicesForMode(ConnectionMode).FirstOrDefault();
         OnPropertyChanged(null);
     }
     public ObservableCollection<AdbForwarderMappingEditorViewModel> Mappings { get; }
