@@ -171,7 +171,7 @@ public sealed class AdbForwarderToolService
         return merged;
     }
 
-    private static AdbForwarderConfiguredState BuildConfiguredState(AdbForwarderServiceSnapshot state)
+    public static AdbForwarderConfiguredState BuildConfiguredState(AdbForwarderServiceSnapshot state)
     {
         var forward = state.ForwardDevices.Select(device => new AdbConfiguredForwardDevice(
             device.DeviceId,
@@ -193,14 +193,14 @@ public sealed class AdbForwarderToolService
             device.UsbSerial,
             device.Host,
             device.Port,
-            30,
+            device.IntervalSeconds,
             string.Equals(device.Status, "reachable", StringComparison.OrdinalIgnoreCase),
             string.Equals(device.Status, "recovering", StringComparison.OrdinalIgnoreCase),
             device.Status,
             device.LastAction)).ToArray();
         return new AdbForwarderConfiguredState(
             state.ConfigurationPath,
-            "",
+            state.WakeupPadDeviceId,
             forward,
             wifi,
             state.Health == "degraded" ? state.Summary : "");
@@ -346,7 +346,7 @@ public sealed class AdbForwarderToolService
                 index++;
                 return new AdbForwarderMapping(
                     ReadString(mapping, "id", $"mapping-{index}"),
-                    ReadString(mapping, "name", $"Mapping {index}"),
+                    ReadString(mapping, "name", $"映射 {index}"),
                     ReadBool(mapping, "enabled", true),
                     ReadString(mapping, "listenAddress", "0.0.0.0"),
                     ReadInt(mapping, "listenPort"),

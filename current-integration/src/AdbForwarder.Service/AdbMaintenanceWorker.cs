@@ -172,6 +172,7 @@ internal sealed class AdbMaintenanceWorker
                 summary,
                 adbPath,
                 _configurationPath,
+                configuration.WakeupPadDeviceId,
                 forwardDevices,
                 wifiDevices,
                 rules.Select(rule => new AdbPortProxyState(
@@ -198,7 +199,7 @@ internal sealed class AdbMaintenanceWorker
     {
         if (!entry.Enabled)
         {
-            return new AdbWifiDeviceState(entry.Name, false, entry.UsbSerial, entry.Host, entry.Port, "disabled", "配置中已停用");
+            return new AdbWifiDeviceState(entry.Name, false, entry.UsbSerial, entry.Host, entry.Port, entry.IntervalSeconds, "disabled", "配置中已停用");
         }
 
         var reachable = await CanConnectAsync(entry.Host, entry.Port, TimeSpan.FromSeconds(2), cancellationToken)
@@ -207,12 +208,12 @@ internal sealed class AdbMaintenanceWorker
         {
             _ = await RunAsync(adbPath, ["connect", $"{entry.Host}:{entry.Port}"], TimeSpan.FromSeconds(5), cancellationToken)
                 .ConfigureAwait(false);
-            return new AdbWifiDeviceState(entry.Name, true, entry.UsbSerial, entry.Host, entry.Port, "reachable", "网络 ADB 可连接");
+            return new AdbWifiDeviceState(entry.Name, true, entry.UsbSerial, entry.Host, entry.Port, entry.IntervalSeconds, "reachable", "网络 ADB 可连接");
         }
 
         if (!string.Equals(devices.GetValueOrDefault(entry.UsbSerial), "device", StringComparison.OrdinalIgnoreCase))
         {
-            return new AdbWifiDeviceState(entry.Name, true, entry.UsbSerial, entry.Host, entry.Port, "waiting-usb", "等待恢复用 USB 设备");
+            return new AdbWifiDeviceState(entry.Name, true, entry.UsbSerial, entry.Host, entry.Port, entry.IntervalSeconds, "waiting-usb", "等待恢复用 USB 设备");
         }
 
         var tcpip = await RunAsync(
@@ -226,7 +227,7 @@ internal sealed class AdbMaintenanceWorker
                 .ConfigureAwait(false);
         }
         var detail = tcpip.ExitCode == 0 ? "已通过 USB 请求开启网络 ADB" : Compact(tcpip.ErrorText);
-        return new AdbWifiDeviceState(entry.Name, true, entry.UsbSerial, entry.Host, entry.Port, "recovering", detail);
+        return new AdbWifiDeviceState(entry.Name, true, entry.UsbSerial, entry.Host, entry.Port, entry.IntervalSeconds, "recovering", detail);
     }
 
     private async Task RecordAsync(string level, string message, CancellationToken cancellationToken)
@@ -385,13 +386,14 @@ internal sealed record AdbServiceState(
     string Summary,
     string AdbPath,
     string ConfigurationPath,
+    string WakeupPadDeviceId,
     IReadOnlyList<AdbForwardDeviceState> ForwardDevices,
     IReadOnlyList<AdbWifiDeviceState> WifiDevices,
     IReadOnlyList<AdbPortProxyState> PortProxyRules,
     IReadOnlyList<string> RecentActivity)
 {
     public static AdbServiceState Starting(int pid, string configurationPath) =>
-        new(pid, DateTimeOffset.UtcNow, "starting", "正在初始化 ADB 转发服务", "adb", configurationPath, [], [], [], []);
+        new(pid, DateTimeOffset.UtcNow, "starting", "正在初始化 ADB 转发服务", "adb", configurationPath, "", [], [], [], []);
 }
 
 internal sealed record AdbForwardDeviceState(
@@ -410,6 +412,7 @@ internal sealed record AdbWifiDeviceState(
     string UsbSerial,
     string Host,
     int Port,
+    int IntervalSeconds,
     string Status,
     string LastAction);
 

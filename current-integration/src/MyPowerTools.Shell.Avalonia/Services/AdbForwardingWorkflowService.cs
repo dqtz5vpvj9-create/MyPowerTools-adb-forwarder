@@ -1942,7 +1942,7 @@ public sealed class AdbForwardingWorkflowService
     {
         return new AdbForwarderMapping(
             $"aosp-forward-{request.SharedPort}",
-            "AOSP ADB shared endpoint",
+            "AOSP ADB 共享端点",
             true,
             "0.0.0.0",
             request.SharedPort,

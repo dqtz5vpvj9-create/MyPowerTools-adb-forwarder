@@ -110,6 +110,7 @@ public sealed record AdbForwarderServiceSnapshot(
     string Summary,
     string AdbPath,
     string ConfigurationPath,
+    string WakeupPadDeviceId,
     IReadOnlyList<AdbForwarderServiceDevice> ForwardDevices,
     IReadOnlyList<AdbForwarderServiceWifiDevice> WifiDevices,
     IReadOnlyList<AdbForwarderServicePortProxy> PortProxyRules,
@@ -131,6 +132,7 @@ public sealed record AdbForwarderServiceWifiDevice(
     string UsbSerial,
     string Host,
     int Port,
+    int IntervalSeconds,
     string Status,
     string LastAction);
 

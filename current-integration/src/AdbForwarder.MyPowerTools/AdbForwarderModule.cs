@@ -465,7 +465,33 @@ public sealed class AdbForwarderModule : IMptModule
 
     private string AdbPath()
     {
-        return SettingsJson.ReadString(_settings, "adbPath") is { Length: > 0 } value ? value : "adb";
+        var configured = SettingsJson.ReadString(_settings, "adbPath") is { Length: > 0 } value ? value : "adb";
+        if (!OperatingSystem.IsMacOS() || !string.Equals(configured, "adb", StringComparison.Ordinal))
+        {
+            return configured;
+        }
+
+        return ResolveMacAdbPath() ?? configured;
+    }
+
+    /// <summary>
+    /// A launchd-started app inherits a minimal PATH, so the bare "adb" name resolves to nothing
+    /// even when the platform tools are installed. Probe PATH first, then the usual install
+    /// locations, and fall back to the plain name when none of them exist.
+    /// </summary>
+    private static string? ResolveMacAdbPath()
+    {
+        var candidates = (Environment.GetEnvironmentVariable("PATH") ?? "")
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(directory => Path.Combine(directory, "adb"))
+            .Concat([
+                Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                    "Library", "Android", "sdk", "platform-tools", "adb"),
+                "/opt/homebrew/bin/adb",
+                "/usr/local/bin/adb"
+            ]);
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     private static JsonObject DefaultSettings()

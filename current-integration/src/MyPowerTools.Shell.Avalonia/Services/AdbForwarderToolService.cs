@@ -221,7 +221,7 @@ public sealed class AdbForwarderToolService
                 index++;
                 return new AdbForwarderMapping(
                     ReadString(mapping, "id", $"mapping-{index}"),
-                    ReadString(mapping, "name", $"Mapping {index}"),
+                    ReadString(mapping, "name", $"映射 {index}"),
                     ReadBool(mapping, "enabled", true),
                     ReadString(mapping, "listenAddress", "0.0.0.0"),
                     ReadInt(mapping, "listenPort"),

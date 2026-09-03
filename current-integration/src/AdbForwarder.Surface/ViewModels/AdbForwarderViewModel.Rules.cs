@@ -47,7 +47,7 @@ public sealed partial class AdbForwarderViewModel
 
             Mappings.Add(CreateEditor(new AdbForwarderMapping(
                 $"imported-{rule.ListenAddress}-{rule.ListenPort}",
-                $"Port {rule.ListenPort}",
+                $"端口 {rule.ListenPort}",
                 true,
                 rule.ListenAddress,
                 rule.ListenPort,
