@@ -262,6 +262,7 @@ public sealed partial class AdbForwarderViewModel
 
     private void NotifyForwardState()
     {
+        (AddSelectedDeviceToConfigurationCommand as MptAsyncRelayCommand)?.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(CanPreflightForward));
         OnPropertyChanged(nameof(CanStartForward));
         OnPropertyChanged(nameof(CanRetryForward));

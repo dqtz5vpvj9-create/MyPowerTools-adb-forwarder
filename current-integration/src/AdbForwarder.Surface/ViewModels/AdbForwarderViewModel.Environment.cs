@@ -84,6 +84,42 @@ public sealed partial class AdbForwarderViewModel
         return editor;
     }
 
+    private async Task AddSelectedDeviceToConfigurationAsync()
+    {
+        var device = SelectedForwardDevice;
+        if (device is null) return;
+        var existing = ConfiguredForwardDeviceEditors.FirstOrDefault(editor =>
+            string.Equals(editor.DeviceId.Trim(), device.Id, StringComparison.Ordinal));
+        if (existing is null)
+        {
+            var usedPorts = ConfiguredForwardDeviceEditors
+                .Select(editor => int.TryParse(editor.Port, out var port) ? port : 0)
+                .ToHashSet();
+            var port = Math.Clamp(SharedPort, 1, 65535);
+            var firstPort = port;
+            while (usedPorts.Contains(port))
+            {
+                port = port == 65535 ? 1 : port + 1;
+                if (port == firstPort)
+                {
+                    ForwardActionMessage = "所有端口都已用于配置，请先移除不再使用的条目。";
+                    return;
+                }
+            }
+            ConfiguredForwardDeviceEditors.Add(CreateForwardDeviceEditor(
+                new AdbForwarderForwardDeviceSetting(device.Id, port)));
+            MarkEnvironmentDirty();
+            NotifyConfiguredDeviceCounts();
+            EnvironmentMessage = $"已填入 {device.DisplayName} 的设备 ID 和共享端口 {port}。点击保存即可保留此配置。";
+        }
+        else
+        {
+            EnvironmentMessage = $"{device.DisplayName} 已在共享配置中，保留现有端口 {existing.Port}。";
+        }
+        SelectedRouteId = "settings";
+        if (_navigateRoute is not null) await _navigateRoute("settings").ConfigureAwait(true);
+    }
+
     private Task AddConfiguredForwardDeviceAsync()
     {
         ConfiguredForwardDeviceEditors.Add(CreateForwardDeviceEditor(

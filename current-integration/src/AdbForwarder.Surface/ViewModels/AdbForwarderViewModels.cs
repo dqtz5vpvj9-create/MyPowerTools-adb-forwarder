@@ -145,6 +145,8 @@ public sealed partial class AdbForwarderViewModel : MyPowerTools.AvaloniaSdk.Too
         CancelForwardCommand = new MptAsyncRelayCommand(CancelForwardAsync, () => IsForwardBusy);
         CleanupForwardCommand = new MptAsyncRelayCommand(CleanupForwardAsync, () => CanCleanupForward);
         AddConfiguredForwardDeviceCommand = new MptAsyncRelayCommand(AddConfiguredForwardDeviceAsync);
+        AddSelectedDeviceToConfigurationCommand = new MptAsyncRelayCommand(
+            AddSelectedDeviceToConfigurationAsync, () => SelectedForwardDevice is not null);
         AddConfiguredWifiDeviceCommand = new MptAsyncRelayCommand(AddConfiguredWifiDeviceAsync);
         SaveEnvironmentCommand = new MptAsyncRelayCommand(SaveEnvironmentAsync, () => CanSaveEnvironment);
     }
@@ -195,6 +197,7 @@ public sealed partial class AdbForwarderViewModel : MyPowerTools.AvaloniaSdk.Too
     public ICommand CancelForwardCommand { get; }
     public ICommand CleanupForwardCommand { get; }
     public ICommand AddConfiguredForwardDeviceCommand { get; }
+    public ICommand AddSelectedDeviceToConfigurationCommand { get; }
     public ICommand AddConfiguredWifiDeviceCommand { get; }
     public ICommand SaveEnvironmentCommand { get; }
 }

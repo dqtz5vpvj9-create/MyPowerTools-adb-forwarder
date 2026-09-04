@@ -333,6 +333,10 @@
                     </DataTemplate>
                   </controls:MptComboBox.ItemTemplate>
                 </controls:MptComboBox>
+                <controls:MptButton Content="添加所选设备到共享配置"
+                                    Command="{Binding AddSelectedDeviceToConfigurationCommand}"
+                                    HorizontalAlignment="Left"
+                                    ToolTip.Tip="自动填入设备 ID 和未重复的端口，不启动共享，也不覆盖现有配置。" />
                 <TextBlock Text="没有检测到 ADB 设备。连接设备并确认 USB 调试授权后点击刷新。"
                            IsVisible="{Binding !HasForwardDevices}"
                            Foreground="{DynamicResource MptBrushWarning}"
