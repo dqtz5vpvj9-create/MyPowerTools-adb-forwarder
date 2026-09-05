@@ -9,14 +9,270 @@
   "type": "dotnet-surface",
   "primaryRouteId": "forward",
   "routes": [
-    { "routeId": "forward", "surfaceId": "adb-forwarder.forward", "title": "设备状态", "icon": "route.devices", "surface": { "kind": "dotnet", "assembly": "surface/AdbForwarder.Surface.dll", "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory" } },
-    { "routeId": "settings", "surfaceId": "adb-forwarder.settings", "title": "Device settings", "icon": "route.settings", "surface": { "kind": "dotnet", "assembly": "surface/AdbForwarder.Surface.dll", "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory" } },
-    { "routeId": "diagnostics", "surfaceId": "adb-forwarder.diagnostics", "title": "Troubleshooting", "icon": "route.diagnostics", "surface": { "kind": "dotnet", "assembly": "surface/AdbForwarder.Surface.dll", "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory" } }
+    {
+      "routeId": "forward",
+      "surfaceId": "adb-forwarder.forward",
+      "title": "设备状态",
+      "icon": "route.devices",
+      "surface": {
+        "kind": "dotnet",
+        "assembly": "surface/AdbForwarder.Surface.dll",
+        "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory"
+      }
+    },
+    {
+      "routeId": "settings",
+      "surfaceId": "adb-forwarder.settings",
+      "title": "Device settings",
+      "icon": "route.settings",
+      "surface": {
+        "kind": "dotnet",
+        "assembly": "surface/AdbForwarder.Surface.dll",
+        "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory"
+      }
+    },
+    {
+      "routeId": "diagnostics",
+      "surfaceId": "adb-forwarder.diagnostics",
+      "title": "Troubleshooting",
+      "icon": "route.diagnostics",
+      "surface": {
+        "kind": "dotnet",
+        "assembly": "surface/AdbForwarder.Surface.dll",
+        "type": "AdbForwarder.Surface.AdbForwarderSurfaceFactory"
+      }
+    }
   ],
   "homeCard": {
     "summary": "查看有线转发与 Wi-Fi ADB 设备状态。",
     "primaryActionLabel": "设备状态",
     "statusBinding": "module.status",
     "order": 10
-  }
+  },
+  "shortcuts": [
+    {
+      "id": "adb-forwarder.ui.refresh",
+      "title": "Refresh",
+      "context": "",
+      "allowInTextInput": false,
+      "bindings": [
+        {
+          "gesture": "F5",
+          "platform": "all"
+        }
+      ]
+    },
+    {
+      "id": "adb-forwarder.ui.show-forward",
+      "title": "Show Forward",
+      "context": "",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.show-rules",
+      "title": "Show Rules",
+      "context": "",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.show-devices",
+      "title": "Show Devices",
+      "context": "",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.show-activity",
+      "title": "Show Activity",
+      "context": "",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.show-diagnostics",
+      "title": "Show Diagnostics",
+      "context": "",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.show-settings",
+      "title": "Show Settings",
+      "context": "",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.select-wired-forward",
+      "title": "Select Wired Forward",
+      "context": "forward",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.select-wireless-forward",
+      "title": "Select Wireless Forward",
+      "context": "forward",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.add-mapping",
+      "title": "Add Mapping",
+      "context": "rules",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.import-current-rules",
+      "title": "Import Current Rules",
+      "context": "rules",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.save-mappings",
+      "title": "Save Mappings",
+      "context": "rules",
+      "allowInTextInput": true,
+      "bindings": [
+        {
+          "gesture": "Ctrl+S",
+          "platform": "windows"
+        },
+        {
+          "gesture": "Ctrl+S",
+          "platform": "linux"
+        },
+        {
+          "gesture": "Cmd+S",
+          "platform": "macos"
+        }
+      ]
+    },
+    {
+      "id": "adb-forwarder.ui.preview-changes",
+      "title": "Preview Changes",
+      "context": "rules",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.apply",
+      "title": "Apply",
+      "context": "rules",
+      "allowInTextInput": true,
+      "bindings": [
+        {
+          "gesture": "Ctrl+Enter",
+          "platform": "windows"
+        },
+        {
+          "gesture": "Ctrl+Enter",
+          "platform": "linux"
+        },
+        {
+          "gesture": "Cmd+Enter",
+          "platform": "macos"
+        }
+      ]
+    },
+    {
+      "id": "adb-forwarder.ui.revert",
+      "title": "Revert",
+      "context": "rules",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.preflight-forward",
+      "title": "Preflight Forward",
+      "context": "forward",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.start-forward",
+      "title": "Start Forward",
+      "context": "forward",
+      "allowInTextInput": true,
+      "bindings": [
+        {
+          "gesture": "Ctrl+Enter",
+          "platform": "windows"
+        },
+        {
+          "gesture": "Ctrl+Enter",
+          "platform": "linux"
+        },
+        {
+          "gesture": "Cmd+Enter",
+          "platform": "macos"
+        }
+      ]
+    },
+    {
+      "id": "adb-forwarder.ui.retry-forward",
+      "title": "Retry Forward",
+      "context": "forward",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.cancel-forward",
+      "title": "Cancel Forward",
+      "context": "forward",
+      "allowInTextInput": true,
+      "bindings": [
+        {
+          "gesture": "Ctrl+Escape",
+          "platform": "windows"
+        },
+        {
+          "gesture": "Ctrl+Escape",
+          "platform": "linux"
+        },
+        {
+          "gesture": "Cmd+Escape",
+          "platform": "macos"
+        }
+      ]
+    },
+    {
+      "id": "adb-forwarder.ui.cleanup-forward",
+      "title": "Cleanup Forward",
+      "context": "forward",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.add-selected-device-to-configuration",
+      "title": "Add Selected Device To Configuration",
+      "context": "",
+      "allowInTextInput": false,
+      "bindings": []
+    },
+    {
+      "id": "adb-forwarder.ui.save-environment",
+      "title": "Save Environment",
+      "context": "settings",
+      "allowInTextInput": true,
+      "bindings": [
+        {
+          "gesture": "Ctrl+S",
+          "platform": "windows"
+        },
+        {
+          "gesture": "Ctrl+S",
+          "platform": "linux"
+        },
+        {
+          "gesture": "Cmd+S",
+          "platform": "macos"
+        }
+      ]
+    }
+  ]
 }

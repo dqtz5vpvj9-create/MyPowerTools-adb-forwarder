@@ -1,4 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:shortcuts="using:MyPowerTools.AvaloniaSdk"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="using:MyPowerTools.UI.Controls"
              xmlns:services="using:AdbForwarder.Surface.Services"
@@ -45,9 +46,9 @@
                   VerticalAlignment="Center">
             <TextBlock Text="{Binding ServiceStateLabel}" Classes="MptMeta" />
           </Border>
-          <controls:MptButton Content="设置" Command="{Binding ShowSettingsCommand}" />
-          <controls:MptButton Content="诊断" Command="{Binding ShowDiagnosticsCommand}" />
-          <controls:MptButton Content="刷新" Command="{Binding RefreshCommand}" />
+          <controls:MptButton Content="设置" Command="{Binding ShowSettingsCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.show-settings" />
+          <controls:MptButton Content="诊断" Command="{Binding ShowDiagnosticsCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.show-diagnostics" />
+          <controls:MptButton Content="刷新" Command="{Binding RefreshCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.refresh" />
         </StackPanel>
       </Grid>
 
@@ -223,14 +224,14 @@
                   Orientation="Horizontal"
                   Spacing="{DynamicResource MptSpacingS}"
                   VerticalAlignment="Center">
-        <controls:MptButton Content="返回设备状态" Command="{Binding ShowForwardCommand}" />
+        <controls:MptButton Content="返回设备状态" Command="{Binding ShowForwardCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.show-forward" />
         <controls:MptButton Content="设置"
-                            Command="{Binding ShowSettingsCommand}"
+                            Command="{Binding ShowSettingsCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.show-settings"
                             Classes.MptPrimaryButton="{Binding IsSettings}" />
         <controls:MptButton Content="诊断"
-                            Command="{Binding ShowDiagnosticsCommand}"
+                            Command="{Binding ShowDiagnosticsCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.show-diagnostics"
                             Classes.MptPrimaryButton="{Binding IsDiagnostics}" />
-        <controls:MptButton Content="刷新" Command="{Binding RefreshCommand}" />
+        <controls:MptButton Content="刷新" Command="{Binding RefreshCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.refresh" />
       </StackPanel>
     </Grid>
 
@@ -271,7 +272,7 @@
               <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource MptSpacingM}">
                 <Button Classes="connection-mode"
                         Classes.selected="{Binding IsWiredForward}"
-                        Command="{Binding SelectWiredForwardCommand}"
+                        Command="{Binding SelectWiredForwardCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.select-wired-forward"
                         AutomationProperties.Name="使用 USB 连接">
                   <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                     <TextBlock Text="&#xE88E;"
@@ -289,7 +290,7 @@
                 <Button Grid.Column="1"
                         Classes="connection-mode"
                         Classes.selected="{Binding IsWirelessForward}"
-                        Command="{Binding SelectWirelessForwardCommand}"
+                        Command="{Binding SelectWirelessForwardCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.select-wireless-forward"
                         AutomationProperties.Name="使用无线 ADB 连接">
                   <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                     <TextBlock Text="&#xE701;"
@@ -334,7 +335,7 @@
                   </controls:MptComboBox.ItemTemplate>
                 </controls:MptComboBox>
                 <controls:MptButton Content="添加所选设备到共享配置"
-                                    Command="{Binding AddSelectedDeviceToConfigurationCommand}"
+                                    Command="{Binding AddSelectedDeviceToConfigurationCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.add-selected-device-to-configuration"
                                     HorizontalAlignment="Left"
                                     ToolTip.Tip="自动填入设备 ID 和未重复的端口，不启动共享，也不覆盖现有配置。" />
                 <TextBlock Text="没有检测到 ADB 设备。连接设备并确认 USB 调试授权后点击刷新。"
@@ -401,22 +402,22 @@
                 <controls:MptButton Classes="MptPrimaryButton"
                                     Content="开始共享"
                                     Margin="{DynamicResource MptWrapItemMargin}"
-                                    Command="{Binding StartForwardCommand}" />
+                                    Command="{Binding StartForwardCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.start-forward" />
                 <controls:MptButton Content="检查连接"
                                     Margin="{DynamicResource MptWrapItemMargin}"
-                                    Command="{Binding PreflightForwardCommand}" />
+                                    Command="{Binding PreflightForwardCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.preflight-forward" />
                 <controls:MptButton Content="取消"
                                     IsVisible="{Binding IsForwardBusy}"
                                     Margin="{DynamicResource MptWrapItemMargin}"
-                                    Command="{Binding CancelForwardCommand}" />
+                                    Command="{Binding CancelForwardCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.cancel-forward" />
                 <controls:MptButton Content="{Binding RetryForwardLabel}"
                                     IsVisible="{Binding CanRetryForward}"
                                     Margin="{DynamicResource MptWrapItemMargin}"
-                                    Command="{Binding RetryForwardCommand}" />
+                                    Command="{Binding RetryForwardCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.retry-forward" />
                 <controls:MptButton Content="清理资源"
                                     IsVisible="{Binding CanCleanupForward}"
                                     Margin="{DynamicResource MptGapBottomS}"
-                                    Command="{Binding CleanupForwardCommand}" />
+                                    Command="{Binding CleanupForwardCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.cleanup-forward" />
               </WrapPanel>
 
               <Border Classes="MptInset">
@@ -749,7 +750,7 @@
           <controls:MptButton Grid.Column="1"
                               Classes="MptPrimaryButton"
                               Content="保存设备设置"
-                              Command="{Binding SaveEnvironmentCommand}"
+                              Command="{Binding SaveEnvironmentCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.save-environment"
                               VerticalAlignment="Center" />
         </Grid>
       </Border>
@@ -801,7 +802,7 @@
                        Classes="MptPageSubtitle"
                        IsVisible="{Binding !HasActiveSharedDevices}" />
             <controls:MptButton Content="导入当前规则"
-                                Command="{Binding ImportCurrentRulesCommand}"
+                                Command="{Binding ImportCurrentRulesCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.import-current-rules"
                                 HorizontalAlignment="Left" />
           </StackPanel>
         </Border>
@@ -820,7 +821,7 @@
                            TextWrapping="Wrap" />
                 <controls:MptButton Content="查看诊断"
                                     HorizontalAlignment="Left"
-                                    Command="{Binding ShowDiagnosticsCommand}" />
+                                    Command="{Binding ShowDiagnosticsCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.show-diagnostics" />
               </StackPanel>
             </Border>
             <Border Classes="MptInset"
@@ -850,14 +851,14 @@
             <WrapPanel Orientation="Horizontal">
               <controls:MptButton Content="重新预览"
                                   Margin="{DynamicResource MptWrapItemMargin}"
-                                  Command="{Binding PreviewChangesCommand}" />
+                                  Command="{Binding PreviewChangesCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.preview-changes" />
               <controls:MptButton Classes="MptPrimaryButton"
                                   Content="应用更改"
                                   Margin="{DynamicResource MptWrapItemMargin}"
-                                  Command="{Binding ApplyCommand}" />
+                                  Command="{Binding ApplyCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.apply" />
               <controls:MptButton Content="移除已保存规则"
                                   Margin="{DynamicResource MptGapBottomS}"
-                                  Command="{Binding RevertCommand}" />
+                                  Command="{Binding RevertCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.revert" />
             </WrapPanel>
             <TextBlock Classes="MptMeta"
                        Text="应用和还原会创建五分钟有效的一次性审批，并通过 Windows UAC 启动审计 Broker。"
@@ -876,11 +877,11 @@
             </StackPanel>
             <controls:MptButton Grid.Column="1"
                                 Content="添加映射"
-                                Command="{Binding AddMappingCommand}" />
+                                Command="{Binding AddMappingCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.add-mapping" />
             <controls:MptButton Grid.Column="2"
                                 Classes="MptPrimaryButton"
                                 Content="保存映射"
-                                Command="{Binding SaveMappingsCommand}" />
+                                Command="{Binding SaveMappingsCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.save-mappings" />
           </Grid>
 
           <ItemsControl ItemsSource="{Binding Mappings}">
@@ -940,11 +941,11 @@
                          HorizontalAlignment="Center">
                 <controls:MptButton Content="导入当前规则"
                                     Margin="{DynamicResource MptGapRightM}"
-                                    Command="{Binding ImportCurrentRulesCommand}"
+                                    Command="{Binding ImportCurrentRulesCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.import-current-rules"
                                     IsEnabled="{Binding HasCurrentRules}" />
                 <controls:MptButton Content="添加映射"
                                     Classes="MptPrimaryButton"
-                                    Command="{Binding AddMappingCommand}" />
+                                    Command="{Binding AddMappingCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.add-mapping" />
               </WrapPanel>
             </StackPanel>
           </Border>
