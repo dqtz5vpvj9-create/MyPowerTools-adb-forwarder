@@ -96,7 +96,7 @@ try
                 Console.Error.WriteLine($"ADB Forwarder heartbeat write failed: {exception.Message}");
             }
         }
-        await Task.Delay(TimeSpan.FromSeconds(1), cancellation.Token);
+        await Task.Delay(TimeSpan.FromSeconds(OperatingSystem.IsMacOS() ? 15 : 1), cancellation.Token);
     }
 }
 catch (OperationCanceledException) when (cancellation.IsCancellationRequested)

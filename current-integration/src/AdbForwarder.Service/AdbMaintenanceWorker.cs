@@ -56,7 +56,25 @@ internal sealed class AdbMaintenanceWorker
         {
             try
             {
-                await RefreshAsync(cancellationToken).ConfigureAwait(false);
+                var configuration = AdbServiceConfiguration.Load(_configurationPath);
+                if (OperatingSystem.IsMacOS() && configuration.ForwardDevices.Count == 0 &&
+                    configuration.WifiDevices.Count == 0 && string.IsNullOrWhiteSpace(configuration.WakeupPadDeviceId))
+                {
+                    // Nothing to maintain: do not launch adb (or start its server)
+                    // every five seconds. Explicit UI refreshes still call RefreshAsync.
+                    SetState(Snapshot with
+                    {
+                        UpdatedAt = DateTimeOffset.UtcNow,
+                        Health = configuration.Error.Length == 0 ? "idle" : "degraded",
+                        Summary = configuration.Error.Length == 0
+                            ? "未配置自动维护设备，后台待机。可在页面手动扫描设备。"
+                            : configuration.Error
+                    });
+                }
+                else
+                {
+                    await RefreshAsync(cancellationToken).ConfigureAwait(false);
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
