@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:shortcuts="using:MyPowerTools.AvaloniaSdk"
+             xmlns:adaptive="using:MyPowerTools.AvaloniaSdk"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="using:MyPowerTools.UI.Controls"
              xmlns:services="using:AdbForwarder.Surface.Services"
@@ -29,14 +30,14 @@
                 Spacing="{DynamicResource MptSpacingM}"
                 MaxWidth="1600"
                 HorizontalAlignment="Stretch">
-      <Grid ColumnDefinitions="*,Auto"
+      <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto"
             ColumnSpacing="{DynamicResource MptSpacingM}">
         <StackPanel Spacing="2" VerticalAlignment="Center">
           <TextBlock Classes="MptPageTitle" Text="ADB Forwarder" />
           <TextBlock Classes="MptPageSubtitle"
                      Text="有线转发设备与 Wi-Fi ADB 设备状态" />
         </StackPanel>
-        <StackPanel Grid.Column="1"
+        <StackPanel adaptive:MptAdaptiveLayout.StackBelow="480" Grid.Column="1"
                     Orientation="Horizontal"
                     Spacing="{DynamicResource MptSpacingS}"
                     VerticalAlignment="Center">
@@ -68,7 +69,7 @@
                 Padding="0"
                 VerticalAlignment="Top">
           <StackPanel>
-            <Grid ColumnDefinitions="*,Auto" Margin="16,14,16,10">
+            <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto" Margin="16,14,16,10">
               <TextBlock Classes="MptSectionTitle" Text="有线转发设备" />
               <TextBlock Grid.Column="1"
                          Classes="MptMeta"
@@ -78,7 +79,7 @@
             <Border Background="{DynamicResource MptBrushSurfaceMuted}"
                     Margin="1,0,1,0"
                     Padding="14,8">
-              <Grid ColumnDefinitions="1.55*,0.65*,0.85*,1.25*" ColumnSpacing="12">
+              <Grid adaptive:MptAdaptiveLayout.HideBelow="600" adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="1.55*,0.65*,0.85*,1.25*" ColumnSpacing="12">
                 <TextBlock Classes="MptMeta" Text="ADB SERIAL" FontWeight="SemiBold" />
                 <TextBlock Grid.Column="1" Classes="MptMeta" Text="端口" FontWeight="SemiBold" />
                 <TextBlock Grid.Column="2" Classes="MptMeta" Text="状态" FontWeight="SemiBold" />
@@ -92,7 +93,7 @@
                           Padding="14,7"
                           BorderBrush="{DynamicResource MptBrushDivider}"
                           BorderThickness="0,0,0,1">
-                    <Grid ColumnDefinitions="1.55*,0.65*,0.85*,1.25*" ColumnSpacing="12">
+                    <Grid adaptive:MptAdaptiveLayout.ColumnLabels="ADB SERIAL|端口|状态|最后在线" adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="1.55*,0.65*,0.85*,1.25*" ColumnSpacing="12">
                     <TextBlock Text="{Binding DeviceId}"
                                Classes="MptMono"
                                VerticalAlignment="Center"
@@ -135,7 +136,7 @@
                 Padding="0"
                 VerticalAlignment="Top">
           <StackPanel>
-            <Grid ColumnDefinitions="*,Auto" Margin="16,14,16,10">
+            <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto" Margin="16,14,16,10">
               <TextBlock Classes="MptSectionTitle" Text="Wi-Fi ADB 设备" />
               <TextBlock Grid.Column="1"
                          Classes="MptMeta"
@@ -145,7 +146,7 @@
             <Border Background="{DynamicResource MptBrushSurfaceMuted}"
                     Margin="1,0,1,0"
                     Padding="14,8">
-              <Grid ColumnDefinitions="0.8*,1.05*,1.05*,0.85*,1.45*" ColumnSpacing="12">
+              <Grid adaptive:MptAdaptiveLayout.HideBelow="600" adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="0.8*,1.05*,1.05*,0.85*,1.45*" ColumnSpacing="12">
                 <TextBlock Classes="MptMeta" Text="名称" FontWeight="SemiBold" />
                 <TextBlock Grid.Column="1" Classes="MptMeta" Text="端点" FontWeight="SemiBold" />
                 <TextBlock Grid.Column="2" Classes="MptMeta" Text="USB SERIAL" FontWeight="SemiBold" />
@@ -160,7 +161,7 @@
                           Padding="14,7"
                           BorderBrush="{DynamicResource MptBrushDivider}"
                           BorderThickness="0,0,0,1">
-                    <Grid ColumnDefinitions="0.8*,1.05*,1.05*,0.85*,1.45*" ColumnSpacing="12">
+                    <Grid adaptive:MptAdaptiveLayout.ColumnLabels="名称|端点|USB SERIAL|状态|最后操作" adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="0.8*,1.05*,1.05*,0.85*,1.45*" ColumnSpacing="12">
                     <TextBlock Text="{Binding Name}"
                                FontWeight="SemiBold"
                                VerticalAlignment="Center"
@@ -215,12 +216,12 @@
                 Spacing="{DynamicResource MptSpacingL}"
                 MaxWidth="1480"
                 HorizontalAlignment="Stretch">
-    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource MptSpacingM}">
+    <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource MptSpacingM}">
       <StackPanel Spacing="2" VerticalAlignment="Center">
         <TextBlock Classes="MptPageTitle" Text="ADB Forwarder" />
         <TextBlock Classes="MptPageSubtitle" Text="设置与诊断" />
       </StackPanel>
-      <StackPanel Grid.Column="1"
+      <StackPanel adaptive:MptAdaptiveLayout.StackBelow="480" Grid.Column="1"
                   Orientation="Horizontal"
                   Spacing="{DynamicResource MptSpacingS}"
                   VerticalAlignment="Center">
@@ -252,7 +253,7 @@
                     Spacing="{DynamicResource MptSpacingL}">
           <Border Classes="MptCard">
             <StackPanel Spacing="{DynamicResource MptSpacingL}">
-              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+              <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto" ColumnSpacing="12">
                 <StackPanel Spacing="{DynamicResource MptSpacingXs}">
                   <TextBlock Classes="MptSectionTitle" Text="选择要共享的设备" />
                   <TextBlock Classes="MptPageSubtitle"
@@ -269,7 +270,7 @@
                 </Border>
               </Grid>
 
-              <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource MptSpacingM}">
+              <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource MptSpacingM}">
                 <Button Classes="connection-mode"
                         Classes.selected="{Binding IsWiredForward}"
                         Command="{Binding SelectWiredForwardCommand}" shortcuts:MptShortcutHint.CommandId="adb-forwarder.ui.select-wired-forward"
@@ -316,7 +317,7 @@
                                       HorizontalAlignment="Stretch">
                   <controls:MptComboBox.ItemTemplate>
                     <DataTemplate x:DataType="services:AdbForwarderDevice">
-                      <Grid ColumnDefinitions="*,Auto"
+                      <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto"
                             ColumnSpacing="{DynamicResource MptSpacingM}"
                             MinHeight="52"
                             Margin="4,2">
@@ -345,7 +346,7 @@
               </StackPanel>
 
               <Expander Header="高级端口设置">
-                <Grid ColumnDefinitions="*,*,*"
+                <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,*,*"
                       ColumnSpacing="{DynamicResource MptSpacingM}"
                       Margin="0,12,0,0">
                   <StackPanel Spacing="{DynamicResource MptSpacingS}">
@@ -370,7 +371,7 @@
                 <StackPanel Spacing="{DynamicResource MptSpacingM}" Margin="0,12,0,0">
                   <controls:MptCheckBox Content="同时共享给远端主机"
                                         IsChecked="{Binding IncludeSsh, Mode=TwoWay}" />
-                  <Grid IsVisible="{Binding IncludeSsh}"
+                  <Grid adaptive:MptAdaptiveLayout.StackBelow="600" IsVisible="{Binding IncludeSsh}"
                         RowDefinitions="Auto,Auto"
                         ColumnDefinitions="130,*"
                         RowSpacing="{DynamicResource MptSpacingS}"
@@ -421,7 +422,7 @@
               </WrapPanel>
 
               <Border Classes="MptInset">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
+                <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto" ColumnSpacing="18">
                   <StackPanel Spacing="{DynamicResource MptSpacingXs}">
                     <TextBlock Text="{Binding ForwardActionMessage}"
                                FontWeight="SemiBold"
@@ -490,7 +491,7 @@
                     Spacing="{DynamicResource MptSpacingL}">
           <Border Classes="MptCard">
             <StackPanel Spacing="{DynamicResource MptSpacingM}">
-              <Grid ColumnDefinitions="*,Auto">
+              <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto">
                 <StackPanel Spacing="{DynamicResource MptSpacingXs}">
                   <TextBlock Classes="MptSectionTitle" Text="执行详情" />
                   <TextBlock Classes="MptPageSubtitle"
@@ -540,7 +541,7 @@
 
           <Border Classes="MptCard" IsVisible="{Binding HasForwardLogs}">
             <StackPanel Spacing="{DynamicResource MptSpacingM}">
-              <Grid ColumnDefinitions="*,Auto">
+              <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto">
                 <TextBlock Classes="MptSectionTitle" Text="操作记录" />
                 <TextBlock Grid.Column="1" Classes="MptMeta" Text="最多保留 200 条" />
               </Grid>
@@ -549,7 +550,7 @@
                   <ItemsControl ItemsSource="{Binding ForwardLogs}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="vm:AdbForwarderWorkflowLogViewModel">
-                        <Grid ColumnDefinitions="64,110,*"
+                        <Grid adaptive:MptAdaptiveLayout.ColumnLabels="时间|步骤|消息" adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="64,110,*"
                               ColumnSpacing="{DynamicResource MptSpacingS}"
                               Margin="{DynamicResource MptGapBottomXs}">
                           <TextBlock Text="{Binding Time}" Classes="MptMono" />
@@ -571,7 +572,7 @@
 
     <StackPanel IsVisible="{Binding IsSettings}"
                 Spacing="{DynamicResource MptSpacingL}">
-      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+      <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto" ColumnSpacing="12">
         <StackPanel Spacing="2">
           <TextBlock Classes="MptSectionTitle" Text="ADB 环境与设备设置" />
           <TextBlock Classes="MptMeta"
@@ -586,7 +587,7 @@
       <Border Classes="MptCard">
         <StackPanel Spacing="{DynamicResource MptSpacingM}">
           <TextBlock Classes="MptSectionTitle" Text="运行环境" />
-          <Grid ColumnDefinitions="1.2*,0.8*" ColumnSpacing="{DynamicResource MptSpacingL}">
+          <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="1.2*,0.8*" ColumnSpacing="{DynamicResource MptSpacingL}">
             <StackPanel Spacing="6">
               <TextBlock Text="ADB 可执行文件" FontWeight="SemiBold" />
               <controls:MptTextBox Text="{Binding AdbExecutablePath, Mode=TwoWay}"
@@ -617,7 +618,7 @@
 
       <Border Classes="MptCard">
         <StackPanel Spacing="{DynamicResource MptSpacingM}">
-          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+          <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto" ColumnSpacing="12">
             <StackPanel Spacing="2">
               <TextBlock Classes="MptSectionTitle" Text="有线设备转发" />
               <TextBlock Classes="MptMeta"
@@ -633,7 +634,7 @@
               <DataTemplate x:DataType="vm:AdbForwardDeviceSettingEditorViewModel">
                 <Border Classes="MptInset" Margin="{DynamicResource MptGapBottomXs}">
                   <StackPanel Spacing="8">
-                    <Grid ColumnDefinitions="*,160,Auto" ColumnSpacing="10">
+                    <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,160,Auto" ColumnSpacing="10">
                       <StackPanel Spacing="4">
                         <TextBlock Text="设备 ID" Classes="MptMeta" />
                         <controls:MptTextBox Text="{Binding DeviceId, Mode=TwoWay}"
@@ -670,7 +671,7 @@
 
       <Border Classes="MptCard">
         <StackPanel Spacing="{DynamicResource MptSpacingM}">
-          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+          <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto" ColumnSpacing="12">
             <StackPanel Spacing="2">
               <TextBlock Classes="MptSectionTitle" Text="无线设备转发" />
               <TextBlock Classes="MptMeta"
@@ -686,7 +687,7 @@
               <DataTemplate x:DataType="vm:AdbWifiDeviceSettingEditorViewModel">
                 <Border Classes="MptInset" Margin="{DynamicResource MptGapBottomXs}">
                   <StackPanel Spacing="10">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                    <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                       <controls:MptCheckBox IsChecked="{Binding Enabled, Mode=TwoWay}"
                                             Content="启用"
                                             AutomationProperties.Name="启用无线设备" />
@@ -698,7 +699,7 @@
                                           Content="移除"
                                           Command="{Binding RemoveCommand}" />
                     </Grid>
-                    <Grid ColumnDefinitions="1.2*,1.2*,140,170" ColumnSpacing="10">
+                    <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="1.2*,1.2*,140,170" ColumnSpacing="10">
                       <StackPanel Spacing="4">
                         <TextBlock Text="恢复用 USB 序列号" Classes="MptMeta" />
                         <controls:MptTextBox Text="{Binding UsbSerial, Mode=TwoWay}"
@@ -742,7 +743,7 @@
       </Border>
 
       <Border Classes="MptInset">
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto" ColumnSpacing="12">
           <StackPanel Spacing="4">
             <TextBlock Text="{Binding EnvironmentStateLabel}" FontWeight="SemiBold" />
             <TextBlock Text="{Binding EnvironmentMessage}" Classes="MptMeta" TextWrapping="Wrap" />
@@ -758,14 +759,14 @@
 
     <StackPanel IsVisible="{Binding IsRules}"
                 Spacing="{DynamicResource MptSpacingL}">
-      <Grid x:Name="RulesOverviewGrid"
+      <Grid adaptive:MptAdaptiveLayout.StackBelow="600" x:Name="RulesOverviewGrid"
             ColumnDefinitions="1.15*,0.85*"
             ColumnSpacing="{DynamicResource MptSpacingL}">
         <Border x:Name="CurrentRulesCard"
                 Classes="MptCard"
                 VerticalAlignment="Top">
           <StackPanel Spacing="{DynamicResource MptSpacingM}">
-            <Grid ColumnDefinitions="*,Auto">
+            <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto">
               <StackPanel Spacing="{DynamicResource MptSpacingXs}">
                 <TextBlock Classes="MptSectionTitle" Text="已启用的共享端口" />
                 <TextBlock Classes="MptPageSubtitle"
@@ -782,7 +783,7 @@
             <ItemsControl ItemsSource="{Binding ActiveSharedDevices}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="services:AdbConfiguredForwardDevice">
-                  <Grid ColumnDefinitions="Auto,*,Auto"
+                  <Grid adaptive:MptAdaptiveLayout.ColumnLabels="状态|共享端口|转发" adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="Auto,*,Auto"
                         ColumnSpacing="{DynamicResource MptSpacingM}"
                         Margin="{DynamicResource MptGapBottomXs}">
                     <Border Classes="MptStatusBadge running" VerticalAlignment="Center">
@@ -869,7 +870,7 @@
 
       <Border Classes="MptCard">
         <StackPanel Spacing="{DynamicResource MptSpacingM}">
-          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{DynamicResource MptSpacingS}">
+          <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{DynamicResource MptSpacingS}">
             <StackPanel Spacing="{DynamicResource MptSpacingXs}">
               <TextBlock Classes="MptSectionTitle" Text="已管理的映射" />
               <TextBlock Classes="MptPageSubtitle"
@@ -894,7 +895,7 @@
                         BorderThickness="1"
                         Background="{DynamicResource MptBrushSurfaceMuted}">
                   <StackPanel Spacing="{DynamicResource MptSpacingM}">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource MptSpacingS}">
+                    <Grid adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource MptSpacingS}">
                       <controls:MptCheckBox IsChecked="{Binding Enabled, Mode=TwoWay}"
                                             AutomationProperties.Name="启用此映射"
                                             Content="启用" />
@@ -1000,7 +1001,7 @@
       <ItemsControl ItemsSource="{Binding Activity}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="services:AdbForwarderActivity">
-            <Grid ColumnDefinitions="72,80,*" Margin="{DynamicResource MptGapBottomXs}">
+            <Grid adaptive:MptAdaptiveLayout.ColumnLabels="时间|级别|消息" adaptive:MptAdaptiveLayout.StackBelow="600" ColumnDefinitions="72,80,*" Margin="{DynamicResource MptGapBottomXs}">
               <TextBlock Classes="MptMono" Text="{Binding TimeText}" />
               <TextBlock Grid.Column="1" Classes="MptMeta" Text="{Binding Level}" />
               <TextBlock Grid.Column="2" Text="{Binding Message}" TextWrapping="Wrap" />

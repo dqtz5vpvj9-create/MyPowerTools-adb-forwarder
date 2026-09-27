@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
@@ -9,13 +10,17 @@ public sealed partial class AdbForwarderView : UserControl
     public AdbForwarderView()
     {
         AvaloniaXamlLoader.Load(this);
-        SizeChanged += (_, eventArgs) => UpdateResponsiveLayout(eventArgs.NewSize.Width);
+        SizeChanged += (_, _) => Dispatcher.UIThread.Post(() => UpdateResponsiveLayout(Bounds.Width), DispatcherPriority.Loaded);
         Loaded += (_, _) => UpdateResponsiveLayout(Bounds.Width);
         DetachedFromVisualTree += (_, _) => (DataContext as IDisposable)?.Dispose();
     }
 
+    private double _lastResponsiveWidth = double.NaN;
+
     private void UpdateResponsiveLayout(double width)
     {
+        if (width <= 0 || width == _lastResponsiveWidth) return;
+        _lastResponsiveWidth = width;
         var overview = this.FindControl<Grid>("DeviceOverviewGrid");
         var forward = this.FindControl<Border>("ForwardDevicesCard");
         var wifi = this.FindControl<Border>("WifiDevicesCard");
