@@ -491,7 +491,12 @@ internal sealed record AdbServiceConfiguration(
                 var value = line[(separator + 1)..].Trim();
                 if (section.Equals("ForwardDevices", StringComparison.OrdinalIgnoreCase))
                 {
-                    forward.Add(new AdbForwardConfiguration(key, int.Parse(value, CultureInfo.InvariantCulture)));
+                    var port = int.Parse(value, CultureInfo.InvariantCulture);
+                    if (port is < 1 or > 50535)
+                    {
+                        throw new FormatException($"{key} 的共享端口需要在 1 到 50535 之间。");
+                    }
+                    forward.Add(new AdbForwardConfiguration(key, port));
                 }
                 else if (section.Equals("WakeupPad", StringComparison.OrdinalIgnoreCase) && key.Equals("deviceId", StringComparison.OrdinalIgnoreCase))
                 {

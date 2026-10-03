@@ -6,6 +6,7 @@ namespace AdbForwarder.Surface.Services;
 
 public sealed class AdbForwarderConfigurationService
 {
+    public const int MaximumForwardPort = 65535 - 15000;
     private readonly string _configPath;
     private readonly Dictionary<string, DateTimeOffset> _lastSeenOnline =
         new(StringComparer.OrdinalIgnoreCase);
@@ -142,9 +143,9 @@ public sealed class AdbForwarderConfigurationService
             {
                 errors.Add($"有线设备 {index + 1} 的设备 ID 无效。");
             }
-            if (device.Port is < 1 or > 65535)
+            if (device.Port is < 1 or > MaximumForwardPort)
             {
-                errors.Add($"有线设备 {index + 1} 的共享端口需要在 1 到 65535 之间。");
+                errors.Add($"有线设备 {index + 1} 的共享端口需要在 1 到 {MaximumForwardPort} 之间。");
             }
         }
 
@@ -293,7 +294,12 @@ public sealed class AdbForwarderConfigurationService
                 var value = line[(separator + 1)..].Trim();
                 if (section.Equals("ForwardDevices", StringComparison.OrdinalIgnoreCase))
                 {
-                    forward.Add(new ParsedForwardDevice(key, ParsePort(value, key)));
+                    var port = ParsePort(value, key);
+                    if (port > MaximumForwardPort)
+                    {
+                        throw new FormatException($"{key} 的共享端口需要在 1 到 {MaximumForwardPort} 之间。");
+                    }
+                    forward.Add(new ParsedForwardDevice(key, port));
                 }
                 else if (section.Equals("WakeupPad", StringComparison.OrdinalIgnoreCase) &&
                          key.Equals("deviceId", StringComparison.OrdinalIgnoreCase))

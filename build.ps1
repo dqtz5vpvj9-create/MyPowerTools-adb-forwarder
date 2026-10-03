@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
-    [string] $MyPowerToolsRepoRoot
+    [string] $MyPowerToolsRepoRoot,
+    [ValidateSet('Debug', 'Release')]
+    [string] $Configuration = 'Release'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -72,7 +74,7 @@ $dotnetArguments = @(
     'build'
     $projectPath
     '--configuration'
-    'Release'
+    $Configuration
     '--nologo'
     "-p:MyPowerToolsRepoRoot=$resolvedMyPowerToolsRoot"
 )
@@ -105,4 +107,4 @@ if (-not (Test-Path -LiteralPath $expectedAssembly -PathType Leaf)) {
     throw "Expected adapter assembly '$expectedAssembly' is missing from the staged package."
 }
 
-Write-Output "Release package staged at $artifactPackage"
+Write-Output "$Configuration package staged at $artifactPackage"

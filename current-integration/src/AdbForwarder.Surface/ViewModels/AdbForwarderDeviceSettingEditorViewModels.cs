@@ -61,9 +61,9 @@ public sealed class AdbForwardDeviceSettingEditorViewModel : MyPowerTools.Avalon
         {
             errors.Add("请输入设备 ID。");
         }
-        if (!ConfigurationNumber.TryPort(Port, out var port))
+        if (!ConfigurationNumber.TryPort(Port, out var port) || port > AdbForwarderConfigurationService.MaximumForwardPort)
         {
-            errors.Add("共享端口需要在 1 到 65535 之间。");
+            errors.Add($"共享端口需要在 1 到 {AdbForwarderConfigurationService.MaximumForwardPort} 之间。");
         }
 
         ValidationMessage = string.Join(" ", errors);
