@@ -143,34 +143,6 @@ public sealed class AdbForwarderToolService
         }
     }
 
-    private static IReadOnlyList<AdbForwarderDevice> MergeServiceAndDiagnosticDevices(
-        IReadOnlyList<AdbForwarderServiceDevice> serviceDevices,
-        IReadOnlyList<AdbForwarderDevice> diagnosticDevices)
-    {
-        var devicesById = diagnosticDevices.ToDictionary(device => device.Id, StringComparer.Ordinal);
-        var merged = new List<AdbForwarderDevice>(diagnosticDevices);
-        foreach (var serviceDevice in serviceDevices)
-        {
-            if (devicesById.ContainsKey(serviceDevice.DeviceId))
-            {
-                continue;
-            }
-
-            merged.Add(new AdbForwarderDevice(
-                serviceDevice.DeviceId,
-                serviceDevice.Status switch
-                {
-                    "online" => "device",
-                    "offline" => "offline",
-                    _ => "disconnected"
-                },
-                "USB ADB 设备",
-                "",
-                ""));
-        }
-        return merged;
-    }
-
     public static AdbForwarderConfiguredState BuildConfiguredState(AdbForwarderServiceSnapshot state)
     {
         var forward = state.ForwardDevices.Select(device => new AdbConfiguredForwardDevice(
@@ -386,50 +358,6 @@ public sealed class AdbForwarderToolService
         }
 
         return rows;
-    }
-
-    private static IReadOnlyList<AdbForwarderDevice> ApplyModuleRedaction(
-        IReadOnlyList<AdbForwarderDevice> workflowDevices,
-        IReadOnlyList<AdbForwarderDevice> moduleDevices)
-    {
-        var available = moduleDevices.ToList();
-        var result = new List<AdbForwarderDevice>(workflowDevices.Count);
-        for (var index = 0; index < workflowDevices.Count; index++)
-        {
-            var device = workflowDevices[index];
-            var matchIndex = available.FindIndex(candidate =>
-                string.Equals(candidate.State, device.State, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(candidate.Model, device.Model, StringComparison.OrdinalIgnoreCase));
-            var safeId = matchIndex >= 0
-                ? available[matchIndex].Id
-                : $"<adb-device-{index + 1}>";
-            if (matchIndex >= 0)
-            {
-                available.RemoveAt(matchIndex);
-            }
-            result.Add(device with { SafeId = safeId });
-        }
-        foreach (var device in available)
-        {
-            result.Add(device with
-            {
-                SafeId = AdbForwardingWorkflowService.IsNetworkSerial(device.Id)
-                    ? device.Id
-                    : device.DisplayId
-            });
-        }
-        return result;
-    }
-
-    private static string RedactKnownDeviceIds(
-        string value,
-        IReadOnlyList<AdbForwarderDevice> devices)
-    {
-        foreach (var device in devices)
-        {
-            value = AdbForwarderRedaction.DisplayText(value, device.Id);
-        }
-        return value;
     }
 
     private static JsonObject ParseObject(string value)

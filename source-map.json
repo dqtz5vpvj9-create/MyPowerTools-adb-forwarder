@@ -5,17 +5,8 @@
   "sourceNote": "The complete dirty-capable AdbForwarder Git working tree is captured with build outputs, publish artifacts, certificates, archives, and user files excluded.",
   "capturedAtUtc": "2026-07-11T16:45:06.8630136+00:00",
   "originalSource": {
-    "sourceRoot": "C:\\Users\\lixinrui\\source\\repos\\AdbForwarder",
-    "gitTopLevel": "C:/Users/lixinrui/source/repos/AdbForwarder",
     "commit": "ec1b28c3a7b248fa4ca317283022146d37bd2a16",
-    "branch": "master",
-    "dirty": true,
-    "status": [
-      " M AdbForwarder.csproj",
-      " M ForwarderConfiguration.cs",
-      "M  Program.cs",
-      "?? publish.zip"
-    ]
+    "branch": "master"
   },
   "originalSnapshotPath": "original-source",
   "selectedEntries": [
@@ -34,5 +25,15 @@
   "currentIntegrationMatchedFileCount": 29,
   "currentIntegrationCopiedFileCount": 29,
   "currentIntegrationUnmatchedGlobs": [],
-  "currentIntegrationMissingFiles": []
+  "currentIntegrationMissingFiles": [],
+  "integrationCaptureMetadataNote": "currentIntegrationGlobs and capture counts describe the original capture, not the current file inventory. Subsequent retired snapshot paths are recorded in archivedIntegrationSnapshots.",
+  "archivedIntegrationSnapshots": [
+    {
+      "path": "current-integration/src/MyPowerTools.Shell.Avalonia",
+      "recoveryCommit": "cd7286ddc58feba525ea51070dd1d034bc5befbb",
+      "fileCount": 15,
+      "physicalLines": 6606,
+      "recoveryDocument": "current-integration/ARCHIVED-SNAPSHOTS.md"
+    }
+  ]
 }

@@ -94,6 +94,7 @@ public sealed class AdbForwarderProcessRunner : IAdbForwarderProcessRunner
             throw new ArgumentOutOfRangeException(nameof(request), "进程超时必须大于零。");
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         var startedAt = Stopwatch.StartNew();
         var startInfo = new ProcessStartInfo
         {
@@ -124,17 +125,19 @@ public sealed class AdbForwarderProcessRunner : IAdbForwarderProcessRunner
 
             var outputTask = process.StandardOutput.ReadToEndAsync();
             var errorTask = process.StandardError.ReadToEndAsync();
-            if (request.StandardInput is { } standardInput)
-            {
-                await process.StandardInput.WriteAsync(standardInput.AsMemory(), cancellationToken).ConfigureAwait(false);
-                await process.StandardInput.FlushAsync(cancellationToken).ConfigureAwait(false);
-                process.StandardInput.Close();
-            }
-
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(request.Timeout);
             try
             {
+                // Writing can block indefinitely when the child does not read stdin.
+                // Use the same deadline and kill-on-cancellation scope as the exit wait.
+                if (request.StandardInput is { } standardInput)
+                {
+                    await process.StandardInput.WriteAsync(standardInput.AsMemory(), timeout.Token).ConfigureAwait(false);
+                    await process.StandardInput.FlushAsync(timeout.Token).ConfigureAwait(false);
+                    process.StandardInput.Close();
+                }
+
                 await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
