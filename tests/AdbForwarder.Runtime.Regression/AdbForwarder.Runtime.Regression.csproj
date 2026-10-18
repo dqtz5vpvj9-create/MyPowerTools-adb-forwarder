@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../current-integration/src/AdbForwarder.Surface/Services/AdbForwardingWorkflowService.cs" Link="Production/AdbForwardingWorkflowService.cs" />
+    <Compile Include="../../current-integration/src/AdbForwarder.Surface/Services/AdbForwardingWorkflowStateStore.cs" Link="Production/AdbForwardingWorkflowStateStore.cs" />
+    <Compile Include="../../current-integration/src/AdbForwarder.Service/AdbMaintenanceWorker.cs" Link="Production/AdbMaintenanceWorker.cs" />
+    <Compile Include="../../current-integration/src/AdbForwarder.MyPowerTools/PortProxyParser.cs" Link="Production/PortProxyParser.cs" />
+    <Compile Include="../../current-integration/src/AdbForwarder.MyPowerTools/AdbPortProxyModel.cs" Link="Production/AdbPortProxyModel.cs" />
+  </ItemGroup>
+</Project>

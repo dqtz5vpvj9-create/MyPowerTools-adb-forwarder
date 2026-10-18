@@ -20,10 +20,16 @@ internal sealed class AdbMaintenanceWorker
     private readonly string _statePath;
     private readonly string _logPath;
     private readonly TimeSpan _interval;
+    private readonly TimeProvider _timeProvider;
+    private readonly Func<string, IReadOnlyList<string>, TimeSpan, CancellationToken, Task<ProcessResult>> _runProcessAsync;
+    private readonly Func<string, int, TimeSpan, CancellationToken, Task<bool>> _canConnectAsync;
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
     private readonly object _stateGate = new();
     private readonly Queue<string> _activity = new();
     private readonly Dictionary<string, DateTimeOffset> _lastSeenOnline = new(StringComparer.OrdinalIgnoreCase);
+    // Access is serialized by _refreshGate, including manual and scheduled refreshes.
+    private readonly Dictionary<AdbWifiConfiguration, WifiRefresh> _wifiRefreshes = new();
+    private string? _wifiAdbPath;
     private AdbServiceState _state;
     private DateTimeOffset _lastWakeup = DateTimeOffset.MinValue;
 
@@ -31,7 +37,10 @@ internal sealed class AdbMaintenanceWorker
         string toolDataRoot,
         string configurationPath,
         string settingsPath,
-        TimeSpan interval)
+        TimeSpan interval,
+        TimeProvider? timeProvider = null,
+        Func<string, IReadOnlyList<string>, TimeSpan, CancellationToken, Task<ProcessResult>>? runProcessAsync = null,
+        Func<string, int, TimeSpan, CancellationToken, Task<bool>>? canConnectAsync = null)
     {
         _toolDataRoot = toolDataRoot;
         _configurationPath = configurationPath;
@@ -39,6 +48,9 @@ internal sealed class AdbMaintenanceWorker
         _statePath = Path.Combine(toolDataRoot, "service-state.json");
         _logPath = Path.Combine(toolDataRoot, "logs", "service.jsonl");
         _interval = interval;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _runProcessAsync = runProcessAsync ?? RunAsync;
+        _canConnectAsync = canConnectAsync ?? CanConnectAsync;
         _state = AdbServiceState.Starting(Environment.ProcessId, configurationPath);
     }
 
@@ -54,12 +66,16 @@ internal sealed class AdbMaintenanceWorker
     {
         while (!cancellationToken.IsCancellationRequested)
         {
+            var refreshed = false;
             try
             {
                 var configuration = AdbServiceConfiguration.Load(_configurationPath);
                 if (OperatingSystem.IsMacOS() && configuration.ForwardDevices.Count == 0 &&
                     configuration.WifiDevices.Count == 0 && string.IsNullOrWhiteSpace(configuration.WakeupPadDeviceId))
                 {
+                    await _refreshGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+                    try { _wifiRefreshes.Clear(); }
+                    finally { _refreshGate.Release(); }
                     // Nothing to maintain: do not launch adb (or start its server)
                     // every five seconds. Explicit UI refreshes still call RefreshAsync.
                     SetState(Snapshot with
@@ -73,7 +89,8 @@ internal sealed class AdbMaintenanceWorker
                 }
                 else
                 {
-                    await RefreshAsync(cancellationToken).ConfigureAwait(false);
+                    await RefreshAsync(cancellationToken, forceWifiRefresh: false).ConfigureAwait(false);
+                    refreshed = true;
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -93,7 +110,12 @@ internal sealed class AdbMaintenanceWorker
 
             try
             {
-                await Task.Delay(_interval, cancellationToken).ConfigureAwait(false);
+                // A failed refresh (or an idle configuration) must not spin on
+                // a cached deadline that is already overdue.
+                var delay = refreshed
+                    ? await GetRefreshDelayAsync(cancellationToken).ConfigureAwait(false)
+                    : _interval;
+                await Task.Delay(delay, _timeProvider, cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -102,18 +124,49 @@ internal sealed class AdbMaintenanceWorker
         }
     }
 
-    public async Task<AdbServiceState> RefreshAsync(CancellationToken cancellationToken)
+    internal async Task<TimeSpan> GetRefreshDelayAsync(CancellationToken cancellationToken)
+    {
+        await _refreshGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var delay = _interval;
+            foreach (var (entry, refresh) in _wifiRefreshes)
+            {
+                var remaining = WifiInterval(entry) - _timeProvider.GetElapsedTime(refresh.CompletedAt);
+                if (remaining < delay) delay = remaining;
+            }
+            return delay > TimeSpan.Zero ? delay : TimeSpan.Zero;
+        }
+        finally
+        {
+            _refreshGate.Release();
+        }
+    }
+
+    public async Task<AdbServiceState> RefreshAsync(CancellationToken cancellationToken, bool forceWifiRefresh = true)
     {
         await _refreshGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             var configuration = AdbServiceConfiguration.Load(_configurationPath);
             var adbPath = ReadAdbPath(_settingsPath);
-            var devicesResult = await RunAsync(adbPath, ["devices", "-l"], TimeSpan.FromSeconds(8), cancellationToken)
+            if (!string.Equals(_wifiAdbPath, adbPath, StringComparison.Ordinal))
+            {
+                _wifiRefreshes.Clear();
+                _wifiAdbPath = adbPath;
+            }
+            // The full configuration is the cache key. Edits, disable/remove and
+            // reenable/readd must not inherit a stale endpoint, status or deadline.
+            var enabledWifi = configuration.WifiDevices.Where(entry => entry.Enabled).ToHashSet();
+            foreach (var stale in _wifiRefreshes.Keys.Where(entry => !enabledWifi.Contains(entry)).ToArray())
+            {
+                _wifiRefreshes.Remove(stale);
+            }
+            var devicesResult = await _runProcessAsync(adbPath, ["devices", "-l"], TimeSpan.FromSeconds(8), cancellationToken)
                 .ConfigureAwait(false);
             var devices = ParseDevices(devicesResult.StandardOutput);
             var portProxyResult = OperatingSystem.IsWindows()
-                ? await RunAsync("netsh", ["interface", "portproxy", "show", "v4tov4"], TimeSpan.FromSeconds(5), cancellationToken)
+                ? await _runProcessAsync("netsh", ["interface", "portproxy", "show", "v4tov4"], TimeSpan.FromSeconds(5), cancellationToken)
                     .ConfigureAwait(false)
                 : ProcessResult.Unavailable("Windows portproxy is unavailable on this platform.");
             var rules = portProxyResult.ExitCode == 0
@@ -137,7 +190,7 @@ internal sealed class AdbMaintenanceWorker
                 var lastAction = "等待设备连接";
                 if (string.Equals(deviceState, "device", StringComparison.OrdinalIgnoreCase))
                 {
-                    var forward = await RunAsync(
+                    var forward = await _runProcessAsync(
                         adbPath,
                         ["-s", entry.DeviceId, "forward", $"tcp:{internalPort}", "tcp:5555"],
                         TimeSpan.FromSeconds(8),
@@ -162,7 +215,22 @@ internal sealed class AdbMaintenanceWorker
             var wifiDevices = new List<AdbWifiDeviceState>();
             foreach (var entry in configuration.WifiDevices)
             {
-                wifiDevices.Add(await RefreshWifiAsync(adbPath, entry, devices, cancellationToken).ConfigureAwait(false));
+                if (entry.Enabled && !forceWifiRefresh &&
+                    _wifiRefreshes.TryGetValue(entry, out var previous) &&
+                    _timeProvider.GetElapsedTime(previous.CompletedAt) < WifiInterval(entry))
+                {
+                    wifiDevices.Add(previous.State);
+                    continue;
+                }
+
+                var wifiState = await RefreshWifiAsync(adbPath, entry, devices, cancellationToken).ConfigureAwait(false);
+                wifiDevices.Add(wifiState);
+                if (entry.Enabled)
+                {
+                    // Measure from completion with a monotonic clock. Canceled or
+                    // failed attempts that throw never postpone the next retry.
+                    _wifiRefreshes[entry] = new WifiRefresh(_timeProvider.GetTimestamp(), wifiState);
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(configuration.WakeupPadDeviceId) &&
@@ -170,7 +238,7 @@ internal sealed class AdbMaintenanceWorker
                 string.Equals(devices.GetValueOrDefault(configuration.WakeupPadDeviceId), "device", StringComparison.OrdinalIgnoreCase))
             {
                 _lastWakeup = DateTimeOffset.UtcNow;
-                _ = await RunAsync(
+                _ = await _runProcessAsync(
                     adbPath,
                     ["-s", configuration.WakeupPadDeviceId, "shell", "input", "keyevent", "KEYCODE_ENTER"],
                     TimeSpan.FromSeconds(8),
@@ -209,6 +277,11 @@ internal sealed class AdbMaintenanceWorker
         }
     }
 
+    private static TimeSpan WifiInterval(AdbWifiConfiguration entry) =>
+        TimeSpan.FromSeconds(Math.Clamp(entry.IntervalSeconds, 5, 86400));
+
+    private sealed record WifiRefresh(long CompletedAt, AdbWifiDeviceState State);
+
     private async Task<AdbWifiDeviceState> RefreshWifiAsync(
         string adbPath,
         AdbWifiConfiguration entry,
@@ -220,11 +293,11 @@ internal sealed class AdbMaintenanceWorker
             return new AdbWifiDeviceState(entry.Name, false, entry.UsbSerial, entry.Host, entry.Port, entry.IntervalSeconds, "disabled", "配置中已停用");
         }
 
-        var reachable = await CanConnectAsync(entry.Host, entry.Port, TimeSpan.FromSeconds(2), cancellationToken)
+        var reachable = await _canConnectAsync(entry.Host, entry.Port, TimeSpan.FromSeconds(2), cancellationToken)
             .ConfigureAwait(false);
         if (reachable)
         {
-            _ = await RunAsync(adbPath, ["connect", $"{entry.Host}:{entry.Port}"], TimeSpan.FromSeconds(5), cancellationToken)
+            _ = await _runProcessAsync(adbPath, ["connect", $"{entry.Host}:{entry.Port}"], TimeSpan.FromSeconds(5), cancellationToken)
                 .ConfigureAwait(false);
             return new AdbWifiDeviceState(entry.Name, true, entry.UsbSerial, entry.Host, entry.Port, entry.IntervalSeconds, "reachable", "网络 ADB 可连接");
         }
@@ -234,14 +307,14 @@ internal sealed class AdbMaintenanceWorker
             return new AdbWifiDeviceState(entry.Name, true, entry.UsbSerial, entry.Host, entry.Port, entry.IntervalSeconds, "waiting-usb", "等待恢复用 USB 设备");
         }
 
-        var tcpip = await RunAsync(
+        var tcpip = await _runProcessAsync(
             adbPath,
             ["-s", entry.UsbSerial, "tcpip", entry.Port.ToString(CultureInfo.InvariantCulture)],
             TimeSpan.FromSeconds(8),
             cancellationToken).ConfigureAwait(false);
         if (tcpip.ExitCode == 0)
         {
-            _ = await RunAsync(adbPath, ["connect", $"{entry.Host}:{entry.Port}"], TimeSpan.FromSeconds(8), cancellationToken)
+            _ = await _runProcessAsync(adbPath, ["connect", $"{entry.Host}:{entry.Port}"], TimeSpan.FromSeconds(8), cancellationToken)
                 .ConfigureAwait(false);
         }
         var detail = tcpip.ExitCode == 0 ? "已通过 USB 请求开启网络 ADB" : Compact(tcpip.ErrorText);
@@ -390,7 +463,7 @@ internal sealed class AdbMaintenanceWorker
         return first.Length == 0 ? "命令执行失败" : first;
     }
 
-    private sealed record ProcessResult(int ExitCode, string StandardOutput, string StandardError)
+    internal sealed record ProcessResult(int ExitCode, string StandardOutput, string StandardError)
     {
         public string ErrorText => StandardError.Length > 0 ? StandardError : StandardOutput;
         public static ProcessResult Unavailable(string message) => new(-1, "", message);

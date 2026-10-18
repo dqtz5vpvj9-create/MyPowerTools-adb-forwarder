@@ -5,7 +5,7 @@ This repository contains the `adb-forwarder` tool source and its current
 MyPowerTools adapter. Its local submodule origin is:
 
 ```text
-file:///C:/Users/lixinrui/repo/MyPowerTools.ToolRepos/adb-forwarder
+https://github.com/dqtz5vpvj9-create/MyPowerTools-adb-forwarder
 ```
 
 ## Repository layout
@@ -63,3 +63,9 @@ git config -f .gitmodules submodule.tools/adb-forwarder.url <remote-url>
 git submodule sync -- tools/adb-forwarder
 git add .gitmodules
 ```
+
+## Historical integration snapshots
+
+The superseded Shell UI snapshots now live in Git history rather than the current source tree.
+See [the exact file inventory and recovery commands](current-integration/ARCHIVED-SNAPSHOTS.md).
+Original product source and active build/package inputs remain in place.
