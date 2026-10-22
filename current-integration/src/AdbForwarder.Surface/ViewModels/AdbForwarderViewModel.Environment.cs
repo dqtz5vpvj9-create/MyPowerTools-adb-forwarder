@@ -95,11 +95,11 @@ public sealed partial class AdbForwarderViewModel
             var usedPorts = ConfiguredForwardDeviceEditors
                 .Select(editor => int.TryParse(editor.Port, out var port) ? port : 0)
                 .ToHashSet();
-            var port = Math.Clamp(SharedPort, 1, 65535);
+            var port = Math.Clamp(SharedPort, 1, AdbForwarderConfigurationService.MaximumForwardPort);
             var firstPort = port;
             while (usedPorts.Contains(port))
             {
-                port = port == 65535 ? 1 : port + 1;
+                port = port == AdbForwarderConfigurationService.MaximumForwardPort ? 1 : port + 1;
                 if (port == firstPort)
                 {
                     ForwardActionMessage = "所有端口都已用于配置，请先移除不再使用的条目。";
