@@ -351,7 +351,7 @@ public sealed class AdbForwarderProductTests
             return;
         }
 
-        var cli = Path.Combine(Root, "src", "MyPowerTools.Cli", "bin", "Release", "net10.0", "MyPowerTools.Cli.dll");
+        var cli = Path.Combine(Root, "src", "MyPowerTools.Cli", "bin", "Release", "net8.0", "MyPowerTools.Cli.dll");
         Assert.True(File.Exists(cli), "Release CLI must be built before the broker integration test.");
 
         var startInfo = new ProcessStartInfo
