@@ -24,6 +24,7 @@ internal sealed class AdbMaintenanceWorker
     private readonly Func<string, IReadOnlyList<string>, TimeSpan, CancellationToken, Task<ProcessResult>> _runProcessAsync;
     private readonly Func<string, int, TimeSpan, CancellationToken, Task<bool>> _canConnectAsync;
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
+    private readonly SemaphoreSlim _logGate = new(1, 1);
     private readonly object _stateGate = new();
     private readonly Queue<string> _activity = new();
     private readonly Dictionary<string, DateTimeOffset> _lastSeenOnline = new(StringComparer.OrdinalIgnoreCase);
@@ -70,8 +71,9 @@ internal sealed class AdbMaintenanceWorker
             try
             {
                 var configuration = AdbServiceConfiguration.Load(_configurationPath);
-                if (OperatingSystem.IsMacOS() && configuration.ForwardDevices.Count == 0 &&
-                    configuration.WifiDevices.Count == 0 && string.IsNullOrWhiteSpace(configuration.WakeupPadDeviceId))
+                if (configuration.ForwardDevices.Count == 0 &&
+                    configuration.WifiDevices.Count == 0 &&
+                    string.IsNullOrWhiteSpace(configuration.WakeupPadDeviceId))
                 {
                     await _refreshGate.WaitAsync(cancellationToken).ConfigureAwait(false);
                     try { _wifiRefreshes.Clear(); }
@@ -329,15 +331,27 @@ internal sealed class AdbMaintenanceWorker
             _activity.Enqueue(line);
             while (_activity.Count > 100) _activity.Dequeue();
         }
+        await _logGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            const long maxLogBytes = 4L * 1024 * 1024;
             Directory.CreateDirectory(Path.GetDirectoryName(_logPath)!);
+            var current = new FileInfo(_logPath);
+            if (current.Exists && current.Length >= maxLogBytes)
+            {
+                File.Move(_logPath, _logPath + ".1", overwrite: true);
+            }
+
             var json = JsonSerializer.Serialize(new { timestamp = DateTimeOffset.UtcNow, level, message });
             await File.AppendAllTextAsync(_logPath, json + Environment.NewLine, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             Console.Error.WriteLine($"ADB service log write failed: {exception.Message}");
+        }
+        finally
+        {
+            _logGate.Release();
         }
     }
 

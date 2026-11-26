@@ -83,20 +83,23 @@ try
 {
     while (!cancellation.IsCancellationRequested)
     {
-        var heartbeat = $"heartbeat pid={pid} ts={DateTimeOffset.UtcNow:O} health={worker.Snapshot.Health}";
-        Console.WriteLine(heartbeat);
         if (!string.IsNullOrWhiteSpace(heartbeatFile))
         {
+            var heartbeat = $"heartbeat pid={pid} ts={DateTimeOffset.UtcNow:O} health={worker.Snapshot.Health}";
             try
             {
-                await AppendHeartbeatAsync(heartbeatFile, heartbeat, cancellation.Token);
+                await WriteHeartbeatAsync(heartbeatFile, heartbeat, cancellation.Token);
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
                 Console.Error.WriteLine($"ADB Forwarder heartbeat write failed: {exception.Message}");
             }
         }
-        await Task.Delay(TimeSpan.FromSeconds(OperatingSystem.IsMacOS() ? 15 : 1), cancellation.Token);
+
+        var delay = string.IsNullOrWhiteSpace(heartbeatFile)
+            ? Timeout.InfiniteTimeSpan
+            : TimeSpan.FromSeconds(60);
+        await Task.Delay(delay, cancellation.Token);
     }
 }
 catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
@@ -111,18 +114,17 @@ finally
 
 return 0;
 
-static async Task AppendHeartbeatAsync(string path, string line, CancellationToken cancellationToken)
+static async Task WriteHeartbeatAsync(string path, string line, CancellationToken cancellationToken)
 {
-    const long maxHeartbeatBytes = 4L * 1024 * 1024;
     var parent = Path.GetDirectoryName(path);
-    if (!string.IsNullOrWhiteSpace(parent)) Directory.CreateDirectory(parent);
-    var current = new FileInfo(path);
-    if (current.Exists && current.Length >= maxHeartbeatBytes)
+    if (!string.IsNullOrWhiteSpace(parent))
     {
-        File.Move(path, path + ".1", overwrite: true);
+        Directory.CreateDirectory(parent);
     }
 
-    await File.AppendAllTextAsync(path, line + Environment.NewLine, cancellationToken);
+    var temporary = $"{path}.{Environment.ProcessId}.tmp";
+    await File.WriteAllTextAsync(temporary, line + Environment.NewLine, cancellationToken);
+    File.Move(temporary, path, overwrite: true);
 }
 
 static async Task ServePipeAsync(
